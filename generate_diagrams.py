@@ -11,41 +11,44 @@ os.makedirs(DIAGRAM_DIR, exist_ok=True)
 plt.rcParams['font.sans-serif'] = 'DejaVu Sans'
 plt.rcParams['font.family'] = 'sans-serif'
 
-# 1. Graph Basics Diagram (Directed vs Undirected with Weights)
+# 1. Graph Basics Diagram (Directed vs Undirected with Degrees & Handshaking)
 def generate_diagram_1():
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 4.5), dpi=300)
     fig.patch.set_facecolor('#FAFAFB')
     
-    # Undirected Weighted
+    # Undirected Graph with Handshaking
     G1 = nx.Graph()
-    G1.add_edge('A', 'B', weight=4)
-    G1.add_edge('A', 'C', weight=2)
-    G1.add_edge('B', 'C', weight=1)
-    G1.add_edge('B', 'D', weight=5)
-    G1.add_edge('C', 'D', weight=8)
-    G1.add_edge('C', 'E', weight=10)
-    G1.add_edge('D', 'E', weight=2)
+    G1.add_edge('A', 'B')
+    G1.add_edge('A', 'C')
+    G1.add_edge('B', 'C')
+    G1.add_edge('B', 'D')
+    G1.add_edge('C', 'D')
+    G1.add_edge('C', 'E')
+    G1.add_edge('D', 'E')
     pos1 = {'A': (0, 1), 'B': (1, 2), 'C': (1, 0), 'D': (2, 2), 'E': (2, 0)}
+    degrees1 = dict(G1.degree())
+    labels1 = {n: f"{n}\n(deg={degrees1[n]})" for n in G1.nodes()}
     
     ax1.set_facecolor('#FAFAFB')
-    nx.draw_networkx_nodes(G1, pos1, ax=ax1, node_color='#3B82F6', node_size=700, edgecolors='#1D4ED8', linewidths=2)
-    nx.draw_networkx_labels(G1, pos1, ax=ax1, font_color='white', font_weight='bold', font_size=11)
+    nx.draw_networkx_nodes(G1, pos1, ax=ax1, node_color='#3B82F6', node_size=800, edgecolors='#1D4ED8', linewidths=2)
+    nx.draw_networkx_labels(G1, pos1, labels=labels1, ax=ax1, font_color='white', font_weight='bold', font_size=8.5)
     nx.draw_networkx_edges(G1, pos1, ax=ax1, edge_color='#64748B', width=2)
-    edge_labels1 = nx.get_edge_attributes(G1, 'weight')
-    nx.draw_networkx_edge_labels(G1, pos1, edge_labels=edge_labels1, ax=ax1, font_color='#0F172A', font_weight='bold', font_size=10, bbox=dict(boxstyle="round,pad=0.2", fc="#F1F5F9", ec="#CBD5E1"))
-    ax1.set_title(r"Undirected Weighted Graph $G = (V, E, w)$" + "\n" + r"Handshaking Lemma: $\sum \deg(v) = 2|E| = 14$", fontsize=11, fontweight='bold', pad=10, color='#1E293B')
+    ax1.set_title(r"Undirected Graph $G = (V, E)$" + "\n" + r"Handshaking Lemma: $\sum \deg(v) = 2 + 3 + 4 + 3 + 2 = 14 = 2|E|$", fontsize=10.5, fontweight='bold', pad=10, color='#1E293B')
     ax1.axis('off')
     
     # Directed Graph (Digraph)
     G2 = nx.DiGraph()
     G2.add_edges_from([('1', '2'), ('1', '3'), ('2', '3'), ('3', '4'), ('4', '1'), ('4', '5'), ('5', '3')])
     pos2 = {'1': (0, 1), '2': (1, 1.8), '3': (1, 0.2), '4': (2, 1.6), '5': (2, 0.4)}
+    in_deg = dict(G2.in_degree())
+    out_deg = dict(G2.out_degree())
+    labels2 = {n: f"{n}\n(+{out_deg[n]}/-{in_deg[n]})" for n in G2.nodes()}
     
     ax2.set_facecolor('#FAFAFB')
-    nx.draw_networkx_nodes(G2, pos2, ax=ax2, node_color='#10B981', node_size=700, edgecolors='#047857', linewidths=2)
-    nx.draw_networkx_labels(G2, pos2, ax=ax2, font_color='white', font_weight='bold', font_size=11)
+    nx.draw_networkx_nodes(G2, pos2, ax=ax2, node_color='#10B981', node_size=800, edgecolors='#047857', linewidths=2)
+    nx.draw_networkx_labels(G2, pos2, labels=labels2, ax=ax2, font_color='white', font_weight='bold', font_size=8)
     nx.draw_networkx_edges(G2, pos2, ax=ax2, edge_color='#475569', width=2, arrowsize=18, arrowstyle='-|>', connectionstyle='arc3,rad=0.08')
-    ax2.set_title("Directed Graph (Digraph) G = (V, E)\n" + r"In-Degree & Out-Degree: $\sum \deg^+(v) = \sum \deg^-(v) = 7$", fontsize=11, fontweight='bold', pad=10, color='#1E293B')
+    ax2.set_title("Directed Graph (Digraph) G = (V, E)\n" + r"In/Out Degrees: $\sum \deg^+(v) = \sum \deg^-(v) = 7 = |E|$", fontsize=10.5, fontweight='bold', pad=10, color='#1E293B')
     ax2.axis('off')
     
     plt.tight_layout()
@@ -138,35 +141,42 @@ def generate_diagram_2():
     plt.close()
     print("Saved:", path)
 
-# 3. Havel-Hakimi Theorem & Graph Realization
+# 3. Havel-Hakimi Theorem & Graph Realization Construction
 def generate_diagram_3():
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(11, 4.5), dpi=300)
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(11.5, 4.8), dpi=300)
     fig.patch.set_facecolor('#FAFAFB')
     
-    # Left: Reduction Table
+    # Left: Reduction & Edge Wiring Synthesis Steps
     ax1.set_facecolor('#F8FAFC')
     ax1.axis('off')
     steps_text = (
-        "Havel-Hakimi Reduction Steps:\n"
+        "Havel-Hakimi Constructive Graph Realization:\n"
+        "Input Sequence: S = (3, 3, 2, 2, 2)  |  Vertices: v1..v5\n"
         "----------------------------------------------------\n"
-        "Initial:      S0 = (3, 3, 2, 2, 2)\n"
-        "Step 1:      Pop d1 = 3 -> Subtract 1 from next 3 items\n"
-        "             Remaining: (3 - 1, 2 - 1, 2 - 1, 2) = (2, 1, 1, 2)\n"
-        "             Sort desc: S1 = (2, 2, 1, 1)\n\n"
-        "Step 2:      Pop d1 = 2 -> Subtract 1 from next 2 items\n"
-        "             Remaining: (2 - 1, 1 - 1, 1) = (1, 0, 1)\n"
-        "             Sort desc: S2 = (1, 1, 0)\n\n"
-        "Step 3:      Pop d1 = 1 -> Subtract 1 from next 1 item\n"
-        "             Remaining: (1 - 1, 0) = (0, 0)\n"
-        "             Sort desc: S3 = (0, 0)  [All zeros!]\n\n"
-        "Conclusion:  (0, 0) is trivially graphical.\n"
-        "             Therefore, (3, 3, 2, 2, 2) is GRAPHICAL!"
+        "Iteration 1:\n"
+        "  • Highest degree: v1 with deg = 3\n"
+        "  • Connect v1 to next 3 highest: {v2, v3, v4}\n"
+        "  • Edges added: (v1, v2), (v1, v3), (v1, v4)\n"
+        "  • Remaining degrees: v2: 2, v3: 1, v4: 1, v5: 2\n"
+        "  • Re-sort: v2(2), v5(2), v3(1), v4(1)\n\n"
+        "Iteration 2:\n"
+        "  • Highest degree: v2 with deg = 2\n"
+        "  • Connect v2 to next 2 highest: {v5, v3}\n"
+        "  • Edges added: (v2, v5), (v2, v3)\n"
+        "  • Remaining degrees: v5: 1, v3: 0, v4: 1\n"
+        "  • Re-sort: v5(1), v4(1), v3(0)\n\n"
+        "Iteration 3:\n"
+        "  • Highest degree: v5 with deg = 1\n"
+        "  • Connect v5 to next 1 highest: {v4}\n"
+        "  • Edge added: (v5, v4)\n"
+        "  • Remaining degrees: all zeros (0, 0, 0)\n\n"
+        "Result: Realization Complete! 6 edges wired."
     )
-    ax1.text(0.05, 0.95, steps_text, transform=ax1.transAxes, fontsize=9.5, fontfamily='monospace',
+    ax1.text(0.04, 0.96, steps_text, transform=ax1.transAxes, fontsize=8.8, fontfamily='monospace',
              verticalalignment='top', bbox=dict(boxstyle="round,pad=0.5", fc="#FFFFFF", ec="#CBD5E1", lw=1.5))
-    ax1.set_title("Havel-Hakimi Algorithmic Proof", fontsize=11, fontweight='bold', color='#1E293B', pad=10)
+    ax1.set_title("Step-by-Step Edge Wiring Algorithm", fontsize=11, fontweight='bold', color='#1E293B', pad=10)
     
-    # Right: Realized Graph
+    # Right: Realized Graph on Canvas
     ax2.set_facecolor('#FAFAFB')
     G = nx.Graph()
     edges = [('v1', 'v2'), ('v1', 'v3'), ('v1', 'v4'), ('v2', 'v3'), ('v2', 'v5'), ('v4', 'v5')]
@@ -175,10 +185,13 @@ def generate_diagram_3():
     degrees = dict(G.degree())
     labels = {node: f"{node}\ndeg={degrees[node]}" for node in G.nodes()}
     
+    # Color edges by the iteration in which they were wired
+    edge_colors = ['#2563EB', '#2563EB', '#2563EB', '#10B981', '#10B981', '#F59E0B']
     nx.draw_networkx_nodes(G, pos, ax=ax2, node_color='#3B82F6', node_size=900, edgecolors='#1D4ED8', linewidths=2)
     nx.draw_networkx_labels(G, pos, labels=labels, ax=ax2, font_color='white', font_weight='bold', font_size=8.5)
-    nx.draw_networkx_edges(G, pos, ax=ax2, edge_color='#64748B', width=2.5)
-    ax2.set_title(r"Realization Graph $G$ on Canvas" + "\n" + r"Degree Sequence: $(3, 3, 2, 2, 2)$", fontsize=11, fontweight='bold', color='#1E293B', pad=10)
+    nx.draw_networkx_edges(G, pos, ax=ax2, edge_color='#475569', width=2.5)
+    
+    ax2.set_title(r"Synthesized Realization Graph $G$" + "\n" + r"Exact Degrees: $v_1:3, v_2:3, v_3:2, v_4:2, v_5:2$", fontsize=11, fontweight='bold', color='#1E293B', pad=10)
     ax2.axis('off')
     
     plt.tight_layout()
@@ -187,7 +200,80 @@ def generate_diagram_3():
     plt.close()
     print("Saved:", path)
 
-# 4. Graph Isomorphism Diagram (Bijection f: V1 -> V2)
+# 4. Subgraphs & Induced Subgraphs Comprehensive Diagram
+def generate_diagram_subgraphs():
+    fig, axes = plt.subplots(1, 3, figsize=(13.5, 4.5), dpi=300)
+    fig.patch.set_facecolor('#FAFAFB')
+    
+    # Original Graph G with 6 vertices
+    # Vertices: 1, 2, 3, 4, 5, 6
+    # S = {1, 2, 3, 5}
+    pos = {
+        '1': (0.2, 1.6), '2': (1.2, 1.6),
+        '3': (0.2, 0.4), '4': (1.8, 1.0),
+        '5': (1.2, 0.4), '6': (2.4, 0.4)
+    }
+    all_edges = [
+        ('1', '2'), ('1', '3'), ('2', '3'), ('2', '4'),
+        ('3', '4'), ('3', '5'), ('4', '5'), ('4', '6'), ('5', '6')
+    ]
+    
+    # Panel 1: Original Graph G with Subset S highlighted
+    ax1 = axes[0]
+    ax1.set_facecolor('#FAFAFB')
+    G_orig = nx.Graph()
+    G_orig.add_edges_from(all_edges)
+    
+    subset_S = ['1', '2', '3', '5']
+    node_colors_1 = ['#10B981' if n in subset_S else '#94A3B8' for n in G_orig.nodes()]
+    nx.draw_networkx_nodes(G_orig, pos, ax=ax1, node_color=node_colors_1, node_size=650, edgecolors='#1E293B', linewidths=2)
+    nx.draw_networkx_labels(G_orig, pos, ax=ax1, font_color='white', font_weight='bold', font_size=9.5)
+    nx.draw_networkx_edges(G_orig, pos, ax=ax1, edge_color='#64748B', width=2)
+    ax1.set_title(r"Original Graph $G = (V, E)$" + "\n" + r"$|V|=6, |E|=9$. Target Subset $S = \{1, 2, 3, 5\}$", fontsize=10, fontweight='bold', color='#1E293B')
+    ax1.axis('off')
+    
+    # Panel 2: Vertex-Induced Subgraph G[S]
+    ax2 = axes[1]
+    ax2.set_facecolor('#FAFAFB')
+    G_induced = nx.Graph()
+    G_induced.add_nodes_from(subset_S)
+    induced_edges = [e for e in all_edges if e[0] in subset_S and e[1] in subset_S]
+    G_induced.add_edges_from(induced_edges)
+    
+    # Draw ghost nodes and ghost edges for discarded elements
+    discarded_nodes = ['4', '6']
+    discarded_edges = [e for e in all_edges if e not in induced_edges]
+    nx.draw_networkx_nodes(G_orig, pos, nodelist=discarded_nodes, ax=ax2, node_color='#F1F5F9', node_size=600, edgecolors='#CBD5E1', linewidths=1.5)
+    nx.draw_networkx_labels(G_orig, pos, labels={n: n for n in discarded_nodes}, ax=ax2, font_color='#94A3B8', font_size=8.5)
+    nx.draw_networkx_edges(G_orig, pos, edgelist=discarded_edges, ax=ax2, edge_color='#E2E8F0', width=1.5, style='dashed')
+    
+    # Draw preserved induced subgraph
+    nx.draw_networkx_nodes(G_induced, pos, ax=ax2, node_color='#10B981', node_size=700, edgecolors='#047857', linewidths=2.5)
+    nx.draw_networkx_labels(G_induced, pos, ax=ax2, font_color='white', font_weight='bold', font_size=10)
+    nx.draw_networkx_edges(G_induced, pos, ax=ax2, edge_color='#059669', width=3)
+    ax2.set_title(r"Vertex-Induced Subgraph $G[S]$" + "\n" + r"Contains ALL edges with both endpoints in $S$ (4 edges)", fontsize=10, fontweight='bold', color='#065F46')
+    ax2.axis('off')
+    
+    # Panel 3: Spanning Subgraph H (All V, subset of E)
+    ax3 = axes[2]
+    ax3.set_facecolor('#FAFAFB')
+    spanning_edges = [('1', '2'), ('1', '3'), ('2', '4'), ('4', '5'), ('5', '6')]
+    dropped_edges = [e for e in all_edges if e not in spanning_edges]
+    
+    nx.draw_networkx_nodes(G_orig, pos, ax=ax3, node_color='#6366F1', node_size=650, edgecolors='#4338CA', linewidths=2)
+    nx.draw_networkx_labels(G_orig, pos, ax=ax3, font_color='white', font_weight='bold', font_size=9.5)
+    nx.draw_networkx_edges(G_orig, pos, edgelist=dropped_edges, ax=ax3, edge_color='#E2E8F0', width=1.5, style='dotted')
+    nx.draw_networkx_edges(G_orig, pos, edgelist=spanning_edges, ax=ax3, edge_color='#4F46E5', width=3)
+    ax3.set_title(r"Spanning Subgraph $H \subseteq G$" + "\n" + r"$V(H) = V(G)$ (all 6 nodes), $E(H) \subset E(G)$ (5 edges)", fontsize=10, fontweight='bold', color='#3730A3')
+    ax3.axis('off')
+    
+    plt.tight_layout()
+    path = os.path.join(DIAGRAM_DIR, "diagram_subgraphs.png")
+    plt.savefig(path, bbox_inches='tight', facecolor=fig.get_facecolor(), edgecolor='none')
+    plt.close()
+    print("Saved:", path)
+
+# 5. Graph Isomorphism Diagram (Bijection f: V1 -> V2)
 def generate_diagram_4():
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 4.5), dpi=300)
     fig.patch.set_facecolor('#FAFAFB')
@@ -219,14 +305,14 @@ def generate_diagram_4():
     ax2.set_title(r"Graph $G_2$ (Component 2)" + "\n" + r"Isomorphism Confirmed: $G_1 \cong G_2$", fontsize=10.5, fontweight='bold', color='#1E293B')
     ax2.axis('off')
     
-    fig.suptitle(r"Graph Isomorphism: Bijection $f(1)=A, f(2)=B, f(3)=C, f(4)=D, f(5)=E$", fontsize=11, fontweight='bold', color='#0F172A', y=0.98)
+    fig.suptitle(r"Graph Isomorphism: Exact Bijection $f(1)=A, f(2)=B, f(3)=C, f(4)=D, f(5)=E$", fontsize=11, fontweight='bold', color='#0F172A', y=0.98)
     plt.tight_layout()
     path = os.path.join(DIAGRAM_DIR, "diagram_4_isomorphism.png")
     plt.savefig(path, bbox_inches='tight', facecolor=fig.get_facecolor(), edgecolor='none')
     plt.close()
     print("Saved:", path)
 
-# 5. Complement Graph (G and G')
+# 6. Complement Graph (G and G')
 def generate_diagram_5():
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 4.5), dpi=300)
     fig.patch.set_facecolor('#FAFAFB')
@@ -257,7 +343,7 @@ def generate_diagram_5():
     plt.close()
     print("Saved:", path)
 
-# 6. Bipartite Verification & 2-Coloring vs Odd Cycle Witness
+# 7. Bipartite Verification & 2-Coloring vs Odd Cycle Witness
 def generate_diagram_6():
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10.5, 4.5), dpi=300)
     fig.patch.set_facecolor('#FAFAFB')
@@ -295,7 +381,7 @@ def generate_diagram_6():
     plt.close()
     print("Saved:", path)
 
-# 7. BFS & DFS Execution Trees
+# 8. BFS & DFS Execution Trees
 def generate_diagram_7():
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(11, 5), dpi=300)
     fig.patch.set_facecolor('#FAFAFB')
@@ -333,83 +419,47 @@ def generate_diagram_7():
     plt.close()
     print("Saved:", path)
 
-# 8. Dijkstra Shortest Path Tree
-def generate_diagram_8():
-    fig, ax = plt.subplots(figsize=(9, 5), dpi=300)
+# 9. Eulerian Circuit vs Hamiltonian Cycle Diagram
+def generate_diagram_eulerian_hamiltonian():
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(11, 4.8), dpi=300)
     fig.patch.set_facecolor('#FAFAFB')
-    ax.set_facecolor('#FAFAFB')
     
-    G = nx.Graph()
-    G.add_edge('A', 'B', weight=4)
-    G.add_edge('A', 'C', weight=2)
-    G.add_edge('B', 'C', weight=1)
-    G.add_edge('B', 'D', weight=5)
-    G.add_edge('C', 'D', weight=8)
-    G.add_edge('C', 'E', weight=10)
-    G.add_edge('D', 'E', weight=2)
-    G.add_edge('D', 'Z', weight=6)
-    G.add_edge('E', 'Z', weight=3)
+    # Left: Eulerian Graph (Envelope / Bowtie with all even degrees)
+    G_eul = nx.Graph()
+    # K4 with all even degrees? A graph with 5 vertices where all degrees are 4 or 2
+    # e.g., C5 with chords or Bowtie with central vertex
+    # 2 triangles sharing a vertex has center deg=4, others deg=2 (all even!)
+    edges_eul = [('C', 'A'), ('A', 'B'), ('B', 'C'), ('C', 'D'), ('D', 'E'), ('E', 'C')]
+    G_eul.add_edges_from(edges_eul)
+    pos_eul = {'A': (-1.5, 1), 'B': (-1.5, -1), 'C': (0, 0), 'D': (1.5, 1), 'E': (1.5, -1)}
+    deg_eul = dict(G_eul.degree())
+    labels_eul = {n: f"{n}\ndeg={deg_eul[n]}" for n in G_eul.nodes()}
     
-    pos = {'A': (0, 1), 'B': (1, 2), 'C': (1, 0), 'D': (2, 2), 'E': (2, 0), 'Z': (3, 1)}
+    ax1.set_facecolor('#FAFAFB')
+    nx.draw_networkx_nodes(G_eul, pos_eul, ax=ax1, node_color='#10B981', node_size=800, edgecolors='#047857', linewidths=2)
+    nx.draw_networkx_labels(G_eul, pos_eul, labels=labels_eul, ax=ax1, font_color='white', font_weight='bold', font_size=8.5)
+    nx.draw_networkx_edges(G_eul, pos_eul, ax=ax1, edge_color='#059669', width=2.5)
+    ax1.set_title("Eulerian Graph (All Even Degrees)\nEulerian Circuit: C -> A -> B -> C -> D -> E -> C\nTraverses EVERY EDGE exactly once", fontsize=10, fontweight='bold', color='#1E293B', pad=10)
+    ax1.axis('off')
     
-    spt_edges = [('A', 'C'), ('C', 'B'), ('B', 'D'), ('D', 'E'), ('E', 'Z')]
-    other_edges = [e for e in G.edges() if e not in spt_edges and (e[1], e[0]) not in spt_edges]
+    # Right: Hamiltonian Graph (visits every vertex once)
+    G_ham = nx.cycle_graph(6)
+    G_ham.add_edges_from([(0, 3), (1, 4), (2, 5)])
+    pos_ham = nx.circular_layout(G_ham)
+    ham_cycle = [(0, 1), (1, 2), (2, 3), (3, 4), (4, 5), (5, 0)]
+    chords = [(0, 3), (1, 4), (2, 5)]
+    labels_ham = {n: f"v{n+1}" for n in G_ham.nodes()}
     
-    nx.draw_networkx_edges(G, pos, edgelist=other_edges, ax=ax, edge_color='#CBD5E1', width=1.5, style='dotted')
-    nx.draw_networkx_edges(G, pos, edgelist=spt_edges, ax=ax, edge_color='#10B981', width=3.5)
-    
-    dist_labels = {'A': 'A (d=0)', 'B': 'B (d=3)', 'C': 'C (d=2)', 'D': 'D (d=8)', 'E': 'E (d=10)', 'Z': 'Z (d=13)'}
-    nx.draw_networkx_nodes(G, pos, ax=ax, node_color='#10B981', node_size=850, edgecolors='#047857', linewidths=2)
-    nx.draw_networkx_labels(G, pos, labels=dist_labels, ax=ax, font_color='white', font_weight='bold', font_size=8)
-    
-    edge_weights = nx.get_edge_attributes(G, 'weight')
-    nx.draw_networkx_edge_labels(G, pos, edge_labels=edge_weights, ax=ax, font_color='#0F172A', font_weight='bold', font_size=9, bbox=dict(boxstyle="round,pad=0.2", fc="#F8FAFC", ec="#94A3B8"))
-    
-    ax.set_title("Dijkstra's Shortest Path Tree from Source A\nOptimal Path to Z: A -> C -> B -> D -> E -> Z (Total Cost = 13)", fontsize=11, fontweight='bold', color='#1E293B', pad=12)
-    ax.axis('off')
+    ax2.set_facecolor('#FAFAFB')
+    nx.draw_networkx_nodes(G_ham, pos_ham, ax=ax2, node_color='#8B5CF6', node_size=750, edgecolors='#6D28D9', linewidths=2)
+    nx.draw_networkx_labels(G_ham, pos_ham, labels=labels_ham, ax=ax2, font_color='white', font_weight='bold', font_size=9)
+    nx.draw_networkx_edges(G_ham, pos_ham, edgelist=chords, ax=ax2, edge_color='#CBD5E1', width=1.5, style='dashed')
+    nx.draw_networkx_edges(G_ham, pos_ham, edgelist=ham_cycle, ax=ax2, edge_color='#7C3AED', width=3)
+    ax2.set_title("Hamiltonian Graph (Dirac's Condition: deg >= n/2)\nHamiltonian Cycle (Purple): v1 -> v2 -> v3 -> v4 -> v5 -> v6 -> v1\nVisits EVERY VERTEX exactly once", fontsize=10, fontweight='bold', color='#1E293B', pad=10)
+    ax2.axis('off')
     
     plt.tight_layout()
-    path = os.path.join(DIAGRAM_DIR, "diagram_8_dijkstra.png")
-    plt.savefig(path, bbox_inches='tight', facecolor=fig.get_facecolor(), edgecolor='none')
-    plt.close()
-    print("Saved:", path)
-
-# 9. Prim's Minimum Spanning Tree
-def generate_diagram_9():
-    fig, ax = plt.subplots(figsize=(9, 5), dpi=300)
-    fig.patch.set_facecolor('#FAFAFB')
-    ax.set_facecolor('#FAFAFB')
-    
-    G = nx.Graph()
-    G.add_edge('1', '2', weight=3)
-    G.add_edge('1', '4', weight=1)
-    G.add_edge('2', '4', weight=3)
-    G.add_edge('2', '3', weight=1)
-    G.add_edge('2', '5', weight=5)
-    G.add_edge('3', '5', weight=6)
-    G.add_edge('3', '6', weight=4)
-    G.add_edge('4', '5', weight=6)
-    G.add_edge('5', '6', weight=2)
-    
-    pos = {'1': (0, 1), '2': (1, 2), '3': (2, 2), '4': (0.5, 0), '5': (1.5, 0), '6': (2.5, 1)}
-    
-    mst_edges = [('1', '4'), ('2', '3'), ('5', '6'), ('1', '2'), ('3', '6')]
-    non_mst = [e for e in G.edges() if e not in mst_edges and (e[1], e[0]) not in mst_edges]
-    
-    nx.draw_networkx_edges(G, pos, edgelist=non_mst, ax=ax, edge_color='#CBD5E1', width=1.5, style='dashed')
-    nx.draw_networkx_edges(G, pos, edgelist=mst_edges, ax=ax, edge_color='#F59E0B', width=3.5)
-    
-    nx.draw_networkx_nodes(G, pos, ax=ax, node_color='#F59E0B', node_size=750, edgecolors='#B45309', linewidths=2)
-    nx.draw_networkx_labels(G, pos, ax=ax, font_color='white', font_weight='bold', font_size=10)
-    
-    edge_weights = nx.get_edge_attributes(G, 'weight')
-    nx.draw_networkx_edge_labels(G, pos, edge_labels=edge_weights, ax=ax, font_color='#0F172A', font_weight='bold', font_size=9, bbox=dict(boxstyle="round,pad=0.2", fc="#FFFBEB", ec="#FCD34D"))
-    
-    ax.set_title("Prim's Minimum Spanning Tree (MST)\nGreedy Cut Property: Total Weight = 1 + 1 + 2 + 3 + 4 = 11 (|E| = |V|-1 = 5)", fontsize=11, fontweight='bold', color='#1E293B', pad=12)
-    ax.axis('off')
-    
-    plt.tight_layout()
-    path = os.path.join(DIAGRAM_DIR, "diagram_9_prims_mst.png")
+    path = os.path.join(DIAGRAM_DIR, "diagram_eulerian_hamiltonian.png")
     plt.savefig(path, bbox_inches='tight', facecolor=fig.get_facecolor(), edgecolor='none')
     plt.close()
     print("Saved:", path)
@@ -418,10 +468,10 @@ if __name__ == "__main__":
     generate_diagram_1()
     generate_diagram_2()
     generate_diagram_3()
+    generate_diagram_subgraphs()
     generate_diagram_4()
     generate_diagram_5()
     generate_diagram_6()
     generate_diagram_7()
-    generate_diagram_8()
-    generate_diagram_9()
+    generate_diagram_eulerian_hamiltonian()
     print("All diagrams generated successfully in", DIAGRAM_DIR)

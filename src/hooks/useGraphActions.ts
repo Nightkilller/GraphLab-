@@ -54,8 +54,13 @@ export function useGraphActions() {
 
   const deleteSelectedNodes = useCallback(() => {
     const s = useGraphStore.getState();
-    if (s.selection.nodeIds.size === 0 || s.visualization.state === VisualizationState.RUNNING) return;
-    s.deleteNodes(Array.from(s.selection.nodeIds));
+    if (s.visualization.state === VisualizationState.RUNNING) return;
+    if (s.selection.nodeIds.size > 0) {
+      s.deleteNodes(Array.from(s.selection.nodeIds));
+    }
+    if (s.selection.textBoxIds.size > 0 || s.selection.textBoxId !== null) {
+      s.deleteSelectedTextBoxes();
+    }
   }, []);
 
   const zoomIn = useCallback(() => {
@@ -76,13 +81,23 @@ export function useGraphActions() {
 
   const deselect = useCallback(() => {
     const s = useGraphStore.getState();
-    if (!selectIsInStepMode(s)) s.selectNode(null);
+    if (!selectIsInStepMode(s)) {
+      s.selectNode(null);
+      s.selectTextBox(null);
+    }
   }, []);
 
   const selectAll = useCallback(() => {
     const s = useGraphStore.getState();
-    if (s.data.nodes.length === 0 || s.visualization.state === VisualizationState.RUNNING) return;
-    s.selectNodes(s.data.nodes.map((n) => n.id));
+    if (
+      (s.data.nodes.length === 0 && s.data.textBoxes.length === 0) ||
+      s.visualization.state === VisualizationState.RUNNING
+    )
+      return;
+    s.selectItems(
+      s.data.nodes.map((n) => n.id),
+      s.data.textBoxes.map((tb) => tb.id)
+    );
   }, []);
 
   const clearAlgorithm = useCallback(() => {

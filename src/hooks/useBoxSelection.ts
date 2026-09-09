@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef } from "react";
-import { GraphNode } from "../components/Graph/types";
+import { GraphNode, CanvasTextBox } from "../components/Graph/types";
 import { DRAG_THRESHOLD, TIMING } from "../constants/ui";
 import { useGraphStore } from "../store/graphStore";
 
@@ -25,10 +25,35 @@ function isNodeInBox(node: GraphNode, box: SelectionBox): boolean {
          node.y >= boxTop && node.y <= boxBottom;
 }
 
+function isTextBoxInBox(tb: CanvasTextBox, box: SelectionBox): boolean {
+  const boxLeft = Math.min(box.startX, box.currentX);
+  const boxRight = Math.max(box.startX, box.currentX);
+  const boxTop = Math.min(box.startY, box.currentY);
+  const boxBottom = Math.max(box.startY, box.currentY);
+
+  const fontSize = tb.fontSize || 15;
+  const lines = (tb.text || "").split("\n");
+  const maxLineLen = Math.max(...lines.map((l) => l.length), 6);
+  const charWidth = fontSize * 0.58;
+  const width = tb.width || Math.max(120, Math.round(maxLineLen * charWidth + 28));
+  const height = tb.height || Math.max(38, Math.round(lines.length * (fontSize * 1.35) + 20));
+
+  const tbRight = tb.x + width;
+  const tbBottom = tb.y + height;
+
+  return !(tb.x > boxRight || tbRight < boxLeft || tb.y > boxBottom || tbBottom < boxTop);
+}
+
 function getNodesInBox(nodes: GraphNode[], box: SelectionBox): number[] {
   return nodes
     .filter((node) => isNodeInBox(node, box))
     .map((node) => node.id);
+}
+
+function getTextBoxesInBox(textBoxes: CanvasTextBox[], box: SelectionBox): string[] {
+  return textBoxes
+    .filter((tb) => isTextBoxInBox(tb, box))
+    .map((tb) => tb.id);
 }
 
 export function useBoxSelection({
@@ -75,11 +100,12 @@ export function useBoxSelection({
           const box = { startX: x, startY: y, currentX, currentY };
           setSelectionBox(box);
 
-          // Select nodes in real-time as box changes
-          const { nodes } = useGraphStore.getState().data;
-          const { selectNodes } = useGraphStore.getState();
+          // Select nodes and text boxes in real-time as box changes
+          const { nodes, textBoxes } = useGraphStore.getState().data;
+          const { selectItems } = useGraphStore.getState();
           const nodeIdsInBox = getNodesInBox(nodes, box);
-          selectNodes(nodeIdsInBox);
+          const textBoxIdsInBox = getTextBoxesInBox(textBoxes, box);
+          selectItems(nodeIdsInBox, textBoxIdsInBox);
         }
       };
 

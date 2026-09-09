@@ -35,10 +35,12 @@ beforeEach(() => {
       edge: null,
       focusedEdge: null,
       textBoxId: null,
+      textBoxIds: new Set<string>(),
     },
     viewport: { zoom: 1, pan: { x: 0, y: 0 } },
     selectToolActive: false,
     textToolActive: false,
+    editingTextBoxId: null,
   })
 })
 

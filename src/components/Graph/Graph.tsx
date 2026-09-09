@@ -58,6 +58,7 @@ export function Graph({ ref }: { ref?: Ref<GraphHandle> }) {
   const textToolActive = useGraphStore((state) => state.textToolActive);
   const addTextBox = useGraphStore((state) => state.addTextBox);
   const selectTextBox = useGraphStore((state) => state.selectTextBox);
+  const setEditingTextBoxId = useGraphStore((state) => state.setEditingTextBoxId);
 
   // Shared algorithm node click handler
   const { handleNodeClick } = useAlgorithmNodeClick();
@@ -182,8 +183,14 @@ export function Graph({ ref }: { ref?: Ref<GraphHandle> }) {
 
   // Handle click on canvas/node
   const handleCanvasClick = useCallback((event: React.MouseEvent<SVGSVGElement>) => {
-    const target = event.target as SVGSVGElement;
+    const target = event.target as HTMLElement | SVGElement;
     const isNode = target.tagName === "circle";
+    const isTextBox = Boolean(target.closest?.(".canvas-text-box"));
+
+    // If click was inside a text box, let text box handler manage it
+    if (isTextBox) {
+      return;
+    }
 
     // Algorithm mode - delegate to shared hook (body click only, not hit area ring)
     if (currentAlgorithm && isNode && !isVisualizing && !target.id.startsWith("hit-")) {
@@ -203,11 +210,12 @@ export function Graph({ ref }: { ref?: Ref<GraphHandle> }) {
       selectNode(null);
     }
 
-    // Text tool mode - click on empty canvas to create text box
+    // Text tool mode - click on empty canvas to create text box and enter edit mode immediately
     if (!isNode && textToolActive && !isDraggingCanvas.current && !isVisualizing) {
       const { x, y } = screenToSvgCoords(event.clientX, event.clientY);
-      const newId = addTextBox({ x: Math.round(x), y: Math.round(y), text: "Type note..." });
+      const newId = addTextBox({ x: Math.round(x), y: Math.round(y), text: "" });
       selectTextBox(newId);
+      setEditingTextBoxId(newId);
       haptics.medium();
       return;
     }
@@ -223,7 +231,7 @@ export function Graph({ ref }: { ref?: Ref<GraphHandle> }) {
       addNode(x, y);
       haptics.medium();
     }
-  }, [currentAlgorithm, isVisualizing, handleNodeClick, hasSelectedNodes, screenToSvgCoords, selectNode, addNode, isDraggingEdge, isDraggingCanvas, isBoxSelecting, setVisualizationAlgorithm, selectToolActive, textToolActive, addTextBox, selectTextBox, haptics]);
+  }, [currentAlgorithm, isVisualizing, handleNodeClick, hasSelectedNodes, screenToSvgCoords, selectNode, addNode, isDraggingEdge, isDraggingCanvas, isBoxSelecting, setVisualizationAlgorithm, selectToolActive, textToolActive, addTextBox, selectTextBox, setEditingTextBoxId, haptics]);
 
   // Node label editing
   const { handleLabelEdit, labelPopupElement } = useNodeLabelEdit({

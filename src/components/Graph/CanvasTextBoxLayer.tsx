@@ -1,6 +1,12 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { createPortal } from "react-dom";
-import { useGraphStore, selectTextBoxes, selectSelectedTextBoxId } from "../../store/graphStore";
+import {
+  useGraphStore,
+  selectTextBoxes,
+  selectSelectedTextBoxId,
+  selectSelectedTextBoxIds,
+  selectEditingTextBoxId,
+} from "../../store/graphStore";
 import { CanvasTextBox } from "./types";
 import { Trash2, Edit3, Check } from "lucide-react";
 import { cn } from "../../lib/utils";
@@ -34,15 +40,27 @@ export const CanvasTextBoxLayer = ({
 }: CanvasTextBoxLayerProps) => {
   const textBoxes = useGraphStore(selectTextBoxes);
   const selectedTextBoxId = useGraphStore(selectSelectedTextBoxId);
+  const selectedTextBoxIds = useGraphStore(selectSelectedTextBoxIds);
+  const editingTextBoxId = useGraphStore(selectEditingTextBoxId);
+  const setEditingTextBoxId = useGraphStore((state) => state.setEditingTextBoxId);
   const selectTextBox = useGraphStore((state) => state.selectTextBox);
   const moveTextBox = useGraphStore((state) => state.moveTextBox);
+  const moveTextBoxes = useGraphStore((state) => state.moveTextBoxes);
   const updateTextBox = useGraphStore((state) => state.updateTextBox);
   const deleteTextBox = useGraphStore((state) => state.deleteTextBox);
+  const textToolActive = useGraphStore((state) => state.textToolActive);
 
-  // Editing state
-  const [editingId, setEditingId] = useState<string | null>(null);
+  // Local draft text for active textarea
   const [editText, setEditText] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Sync draft text when editing begins
+  useEffect(() => {
+    if (editingTextBoxId) {
+      const current = textBoxes.find((b) => b.id === editingTextBoxId);
+      setEditText(current ? current.text : "");
+    }
+  }, [editingTextBoxId, textBoxes]);
 
   // Dragging state
   const dragState = useRef<{
@@ -55,7 +73,7 @@ export const CanvasTextBoxLayer = ({
   // Measure card dimensions for each text box
   const getBoxMetrics = useCallback((box: CanvasTextBox) => {
     const fontSize = box.fontSize || 15;
-    const lines = (box.text || "Type text...").split("\n");
+    const lines = (box.text || "Type note...").split("\n");
     const maxLineLen = Math.max(...lines.map((l) => l.length), 6);
     const charWidth = fontSize * 0.58;
     const paddingX = 14;
@@ -71,36 +89,45 @@ export const CanvasTextBoxLayer = ({
   // Enter edit mode
   const startEditing = useCallback((box: CanvasTextBox) => {
     if (isVisualizing) return;
-    setEditingId(box.id);
     setEditText(box.text);
+    setEditingTextBoxId(box.id);
     selectTextBox(box.id);
-  }, [isVisualizing, selectTextBox]);
+  }, [isVisualizing, selectTextBox, setEditingTextBoxId]);
 
   // Commit text edit
   const commitEdit = useCallback(() => {
-    if (!editingId) return;
+    if (!editingTextBoxId) return;
     const trimmed = editText.trim();
     if (trimmed.length > 0) {
-      updateTextBox(editingId, { text: trimmed });
+      updateTextBox(editingTextBoxId, { text: trimmed });
+    } else {
+      deleteTextBox(editingTextBoxId);
     }
-    setEditingId(null);
-  }, [editingId, editText, updateTextBox]);
+    setEditingTextBoxId(null);
+  }, [editingTextBoxId, editText, updateTextBox, deleteTextBox, setEditingTextBoxId]);
 
   // Focus textarea when editing starts
   useEffect(() => {
-    if (editingId && textareaRef.current) {
+    if (editingTextBoxId && textareaRef.current) {
       textareaRef.current.focus();
       textareaRef.current.select();
     }
-  }, [editingId]);
+  }, [editingTextBoxId]);
 
   // Handle pointer down for dragging / selection
   const handlePointerDown = useCallback((e: React.PointerEvent<SVGGElement>, box: CanvasTextBox) => {
     if (isVisualizing) return;
     e.stopPropagation();
 
-    // Select text box
-    selectTextBox(box.id);
+    if (textToolActive) {
+      startEditing(box);
+      return;
+    }
+
+    // Select text box if not already part of multi-selection
+    if (!selectedTextBoxIds.has(box.id)) {
+      selectTextBox(box.id);
+    }
 
     const svgCoords = screenToSvgCoords(e.clientX, e.clientY);
     dragState.current = {
@@ -112,7 +139,7 @@ export const CanvasTextBoxLayer = ({
 
     const target = e.currentTarget;
     target.setPointerCapture(e.pointerId);
-  }, [isVisualizing, selectTextBox, screenToSvgCoords]);
+  }, [isVisualizing, textToolActive, startEditing, selectedTextBoxIds, selectTextBox, screenToSvgCoords]);
 
   const handlePointerMove = useCallback((e: React.PointerEvent<SVGGElement>) => {
     if (!dragState.current) return;
@@ -126,9 +153,16 @@ export const CanvasTextBoxLayer = ({
     }
 
     if (dragState.current.hasMoved) {
-      moveTextBox(id, Math.round(startBoxPos.x + dx), Math.round(startBoxPos.y + dy));
+      if (selectedTextBoxIds.size > 1 && selectedTextBoxIds.has(id)) {
+        const frameDx = Math.round(currSvg.x - startPointerSvg.x);
+        const frameDy = Math.round(currSvg.y - startPointerSvg.y);
+        moveTextBoxes(Array.from(selectedTextBoxIds), frameDx, frameDy);
+        dragState.current.startPointerSvg = currSvg;
+      } else {
+        moveTextBox(id, Math.round(startBoxPos.x + dx), Math.round(startBoxPos.y + dy));
+      }
     }
-  }, [screenToSvgCoords, moveTextBox]);
+  }, [screenToSvgCoords, selectedTextBoxIds, moveTextBox, moveTextBoxes]);
 
   const handlePointerUp = useCallback((e: React.PointerEvent<SVGGElement>, box: CanvasTextBox) => {
     if (!dragState.current) return;
@@ -141,42 +175,14 @@ export const CanvasTextBoxLayer = ({
     }
 
     // Single click without movement selects
-    if (!hadMoved) {
+    if (!hadMoved && !textToolActive) {
       selectTextBox(box.id);
     }
-  }, [selectTextBox]);
-
-  // Keyboard events when text box is selected (Delete / Backspace / Esc / Enter)
-  useEffect(() => {
-    if (!selectedTextBoxId || editingId) return;
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      // If typing inside an input or button, ignore
-      const target = e.target as HTMLElement;
-      if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable)) {
-        return;
-      }
-
-      if (e.key === "Backspace" || e.key === "Delete") {
-        e.preventDefault();
-        deleteTextBox(selectedTextBoxId);
-        selectTextBox(null);
-      } else if (e.key === "Escape") {
-        selectTextBox(null);
-      } else if (e.key === "Enter") {
-        e.preventDefault();
-        const box = textBoxes.find((b) => b.id === selectedTextBoxId);
-        if (box) startEditing(box);
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [selectedTextBoxId, editingId, deleteTextBox, selectTextBox, textBoxes, startEditing]);
+  }, [selectTextBox, textToolActive]);
 
   const editingBox = useMemo(() => {
-    return textBoxes.find((b) => b.id === editingId);
-  }, [textBoxes, editingId]);
+    return textBoxes.find((b) => b.id === editingTextBoxId);
+  }, [textBoxes, editingTextBoxId]);
 
   const selectedBox = useMemo(() => {
     return textBoxes.find((b) => b.id === selectedTextBoxId);
@@ -203,8 +209,8 @@ export const CanvasTextBoxLayer = ({
     <>
       <g className="canvas-text-boxes">
         {textBoxes.map((box) => {
-          const isSelected = box.id === selectedTextBoxId;
-          const isCurrentlyEditing = box.id === editingId;
+          const isSelected = box.id === selectedTextBoxId || selectedTextBoxIds.has(box.id);
+          const isCurrentlyEditing = box.id === editingTextBoxId;
           const { width, height, lines, fontSize, lineHeight, paddingX, paddingY } = getBoxMetrics(box);
 
           const isCustomColor = box.color && box.color !== "default";
@@ -224,7 +230,7 @@ export const CanvasTextBoxLayer = ({
             <g
               key={box.id}
               transform={`translate(${box.x}, ${box.y})`}
-              className="cursor-move select-none"
+              className="canvas-text-box cursor-move select-none"
               onPointerDown={(e) => handlePointerDown(e, box)}
               onPointerMove={handlePointerMove}
               onPointerUp={(e) => handlePointerUp(e, box)}
@@ -244,11 +250,11 @@ export const CanvasTextBoxLayer = ({
                 ry={10}
                 fill={cardBg}
                 stroke={cardBorder}
-                strokeWidth={isSelected ? 2 : 1}
+                strokeWidth={isSelected ? 2.5 : 1}
                 strokeDasharray={isSelected ? "none" : undefined}
                 className="transition-colors duration-150"
                 style={{
-                  filter: isSelected ? "drop-shadow(0 4px 12px rgba(0,0,0,0.15))" : "drop-shadow(0 2px 4px rgba(0,0,0,0.06))",
+                  filter: isSelected ? "drop-shadow(0 4px 14px rgba(59, 130, 246, 0.35))" : "drop-shadow(0 2px 4px rgba(0,0,0,0.06))",
                 }}
               />
 
@@ -295,8 +301,8 @@ export const CanvasTextBoxLayer = ({
         })}
       </g>
 
-      {/* Floating Toolbar when a text box is selected (Portaled to body) */}
-      {selectedBox && !editingId && selectedScreenPos && createPortal(
+      {/* Floating Toolbar when a single text box is selected (Portaled to body) */}
+      {selectedBox && !editingTextBoxId && selectedScreenPos && createPortal(
         <div
           style={{
             position: "fixed",
@@ -375,6 +381,19 @@ export const CanvasTextBoxLayer = ({
         document.body
       )}
 
+      {/* Backdrop when editing so clicking anywhere outside commits edit */}
+      {editingBox && createPortal(
+        <div
+          className="fixed inset-0"
+          style={{ zIndex: 65, cursor: "default" }}
+          onPointerDown={(e) => {
+            e.stopPropagation();
+            commitEdit();
+          }}
+        />,
+        document.body
+      )}
+
       {/* Floating Inline HTML Textarea Editor when actively editing (Portaled to body) */}
       {editingBox && editorScreenPos && createPortal(
         <div
@@ -387,15 +406,17 @@ export const CanvasTextBoxLayer = ({
           className="flex flex-col animate-in fade-in zoom-in-95 duration-100"
           onPointerDown={(e) => e.stopPropagation()}
         >
-          <div className="relative shadow-2xl rounded-xl border-2 border-(--color-accent) bg-(--color-surface) overflow-hidden min-w-[200px]">
+          <div className="relative shadow-2xl rounded-xl border-2 border-(--color-accent) bg-(--color-surface) overflow-hidden min-w-[220px]">
             <textarea
               ref={textareaRef}
               value={editText}
               onChange={(e) => setEditText(e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === "Escape") {
+                  e.stopPropagation();
                   commitEdit();
                 } else if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+                  e.stopPropagation();
                   commitEdit();
                 }
               }}
@@ -405,10 +426,10 @@ export const CanvasTextBoxLayer = ({
                 fontSize: `${editingBox.fontSize || 15}px`,
                 color: editingBox.color && editingBox.color !== "default" ? editingBox.color : "var(--color-text)",
               }}
-              placeholder="Type notes or equations..."
+              placeholder="Type note or text here..."
             />
             <div className="flex items-center justify-between px-2 py-1 bg-(--color-paper) border-t border-(--color-divider) text-[10px] text-(--color-text-muted)">
-              <span>Esc or ⌘+Enter to finish</span>
+              <span>Esc or ⌘+Enter to save</span>
               <div className="flex gap-1">
                 <button
                   onClick={commitEdit}

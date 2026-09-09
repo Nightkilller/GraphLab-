@@ -321,7 +321,27 @@ export function useCanvasInteractions({
           currentY: world.y,
         });
         const nodesInBox = nodesInRect(nodes, state.startWorldX, state.startWorldY, world.x, world.y);
-        selectNodes(nodesInBox.map(n => n.id));
+        const { textBoxes } = useGraphStore.getState().data;
+        const boxLeft = Math.min(state.startWorldX, world.x);
+        const boxRight = Math.max(state.startWorldX, world.x);
+        const boxTop = Math.min(state.startWorldY, world.y);
+        const boxBottom = Math.max(state.startWorldY, world.y);
+
+        const textBoxIdsInBox = textBoxes
+          .filter((tb) => {
+            const fontSize = tb.fontSize || 15;
+            const lines = (tb.text || "").split("\n");
+            const maxLineLen = Math.max(...lines.map((l) => l.length), 6);
+            const width = tb.width || Math.max(120, Math.round(maxLineLen * (fontSize * 0.58) + 28));
+            const height = tb.height || Math.max(38, Math.round(lines.length * (fontSize * 1.35) + 20));
+            return !(tb.x > boxRight || tb.x + width < boxLeft || tb.y > boxBottom || tb.y + height < boxTop);
+          })
+          .map((tb) => tb.id);
+
+        useGraphStore.getState().selectItems(
+          nodesInBox.map((n) => n.id),
+          textBoxIdsInBox
+        );
         break;
       }
 
@@ -389,12 +409,18 @@ export function useCanvasInteractions({
           selectNode(state.nodeId);
         }
       } else if (state.type === 'pending-pan' && !hitNode) {
+        const store = useGraphStore.getState();
         if (currentAlgorithm && !isVisualizing) {
           setVisualizationAlgorithm(undefined);
-        } else if (selectedNodeIds.size > 0) {
+        } else if (selectedNodeIds.size > 0 || store.selection.textBoxIds.size > 0 || store.selection.textBoxId !== null) {
           selectNode(null);
+          store.selectTextBox(null);
         } else if (!currentAlgorithm && !isVisualizing) {
-          if (!useGraphStore.getState().selectToolActive) {
+          if (store.textToolActive) {
+            const newId = store.addTextBox({ x: Math.round(world.x), y: Math.round(world.y), text: "" });
+            store.selectTextBox(newId);
+            store.setEditingTextBoxId(newId);
+          } else if (!store.selectToolActive) {
             addNode(world.x, world.y);
           }
         }
