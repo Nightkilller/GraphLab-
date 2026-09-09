@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <defs>
+    <style>
+      .bg { fill: #ffffff; }
+      .stroke { stroke: #262626; stroke-width: 6.8; stroke-linecap: round; stroke-linejoin: round; fill: none; }
+      @media (prefers-color-scheme: dark) {
+        .bg { fill: #18181b; }
+        .stroke { stroke: #f4f4f5; }
+      }
+    </style>
+  </defs>
+  <rect class="bg" width="100" height="100" rx="22" />
+  <!-- Axes: vertical down to origin, then horizontal right -->
+  <path class="stroke" d="M 23 23 L 23 77 L 77 77" />
+  <!-- Zigzag chart line: origin -> peak1 -> trough1 -> peak2 -> trough2 -> end -->
+  <path class="stroke" d="M 23 77 L 33.5 58 L 41.5 66 L 51.5 41.5 L 60 56.5 L 77 23.6" />
+</svg>

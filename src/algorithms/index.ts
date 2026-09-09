@@ -4,25 +4,27 @@
 
 import { algorithmRegistry } from "./registry";
 
-// Import all algorithm adapters
+// Import algorithm adapters
 import bfsAdapter from "./adapters/bfs";
 import dfsAdapter from "./adapters/dfs";
 import bfsPathfindingAdapter from "./adapters/bfs-pathfinding";
 import dfsPathfindingAdapter from "./adapters/dfs-pathfinding";
 import dijkstraAdapter from "./adapters/dijkstra";
-import primsAdapter from "./adapters/prims";
 import cycleDetectionAdapter from "./adapters/cycleDetection";
-import bellmanFordAdapter from "./adapters/bellmanFord";
+import eulerianAdapter from "./adapters/eulerian";
+import hamiltonianAdapter from "./adapters/hamiltonian";
+import connectedComponentsAdapter from "./adapters/connectedComponents";
 
-// Register all algorithms
+// Register algorithms
 algorithmRegistry.register(bfsAdapter);
 algorithmRegistry.register(dfsAdapter);
 algorithmRegistry.register(bfsPathfindingAdapter);
 algorithmRegistry.register(dfsPathfindingAdapter);
 algorithmRegistry.register(dijkstraAdapter);
-algorithmRegistry.register(primsAdapter);
 algorithmRegistry.register(cycleDetectionAdapter);
-algorithmRegistry.register(bellmanFordAdapter);
+algorithmRegistry.register(eulerianAdapter);
+algorithmRegistry.register(hamiltonianAdapter);
+algorithmRegistry.register(connectedComponentsAdapter);
 
 // Export registry and types for use in components
 export { algorithmRegistry } from "./registry";

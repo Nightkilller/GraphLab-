@@ -615,3 +615,166 @@ export function generateWeighted(): GeneratedGraph {
 
   return { nodes, edges, nodeCounter: nodes.length };
 }
+
+/**
+ * Graph 1: Seven Bridges of Königsberg (Historical Euler Graph Problem)
+ * 4 vertices with all odd degrees (5, 3, 3, 3) - Proves impossibility of Euler walk/circuit.
+ */
+export function generateKonigsberg(): GeneratedGraph {
+  const nodes: GraphNode[] = [
+    { id: 0, x: -160, y: -90, r: NODE.RADIUS, label: "North" },
+    { id: 1, x: 0, y: 0, r: NODE.RADIUS, label: "Island" },
+    { id: 2, x: -160, y: 90, r: NODE.RADIUS, label: "South" },
+    { id: 3, x: 160, y: 0, r: NODE.RADIUS, label: "East" },
+  ];
+
+  const edges = new Map<number, GraphEdge[]>();
+  nodes.forEach((n) => edges.set(n.id, []));
+
+  // Connections (represented with offset/intermediate layout or direct edges)
+  const edgeDefs: [number, number][] = [
+    [0, 1], // Bridge 1 North-Island
+    [0, 3], // Bridge 3 North-East
+    [1, 2], // Bridge 4 Island-South
+    [2, 3], // Bridge 6 South-East
+    [1, 3], // Bridge 7 Island-East
+    [0, 2], // Direct cross-bank
+  ];
+
+  for (const [u, v] of edgeDefs) {
+    addEdgeToMap(edges, nodes[u], nodes[v], EDGE_TYPE.UNDIRECTED, 1);
+  }
+
+  return { nodes, edges, nodeCounter: nodes.length };
+}
+
+/**
+ * Graph 2: Euler Envelope / House Graph (Semi-Eulerian)
+ * Exactly 2 odd-degree vertices: has an Eulerian Path (can draw in one stroke), but no Eulerian Circuit.
+ */
+export function generateEulerHouse(): GeneratedGraph {
+  const nodes: GraphNode[] = [
+    { id: 0, x: -100, y: 80, r: NODE.RADIUS, label: "A" },  // bottom-left
+    { id: 1, x: 100, y: 80, r: NODE.RADIUS, label: "B" },   // bottom-right
+    { id: 2, x: 100, y: -40, r: NODE.RADIUS, label: "C" },  // top-right
+    { id: 3, x: -100, y: -40, r: NODE.RADIUS, label: "D" }, // top-left
+    { id: 4, x: 0, y: -130, r: NODE.RADIUS, label: "Peak" }, // roof peak
+  ];
+
+  const edges = new Map<number, GraphEdge[]>();
+  nodes.forEach((n) => edges.set(n.id, []));
+
+  // Envelope edges
+  const edgeDefs: [number, number][] = [
+    [0, 1], // Base
+    [1, 2], // Right wall
+    [2, 3], // Ceiling
+    [3, 0], // Left wall
+    [0, 2], // Diagonal 1
+    [1, 3], // Diagonal 2
+    [3, 4], // Roof left
+    [2, 4], // Roof right
+  ];
+
+  for (const [u, v] of edgeDefs) {
+    addEdgeToMap(edges, nodes[u], nodes[v], EDGE_TYPE.UNDIRECTED, 1);
+  }
+
+  return { nodes, edges, nodeCounter: nodes.length };
+}
+
+/**
+ * Graph 3: Petersen Graph
+ * 10 vertices, 15 edges, cubic (3-regular).
+ * Famous for having NO Hamiltonian circuit (Hypohamiltonian).
+ */
+export function generatePetersen(): GeneratedGraph {
+  const nodes: GraphNode[] = [];
+  const edges = new Map<number, GraphEdge[]>();
+
+  const outerR = 170;
+  const innerR = 85;
+
+  // Outer 5 vertices (0 to 4)
+  for (let i = 0; i < 5; i++) {
+    const angle = (2 * Math.PI * i) / 5 - Math.PI / 2;
+    nodes.push({
+      id: i,
+      x: Math.round(outerR * Math.cos(angle)),
+      y: Math.round(outerR * Math.sin(angle)),
+      r: NODE.RADIUS,
+      label: `O${i + 1}`,
+    });
+    edges.set(i, []);
+  }
+
+  // Inner 5 vertices (5 to 9)
+  for (let i = 0; i < 5; i++) {
+    const angle = (2 * Math.PI * i) / 5 - Math.PI / 2;
+    nodes.push({
+      id: i + 5,
+      x: Math.round(innerR * Math.cos(angle)),
+      y: Math.round(innerR * Math.sin(angle)),
+      r: NODE.RADIUS,
+      label: `I${i + 1}`,
+    });
+    edges.set(i + 5, []);
+  }
+
+  // Outer cycle: 0-1-2-3-4-0
+  for (let i = 0; i < 5; i++) {
+    addEdgeToMap(edges, nodes[i], nodes[(i + 1) % 5], EDGE_TYPE.UNDIRECTED, 1);
+  }
+
+  // Spokes: 0-5, 1-6, 2-7, 3-8, 4-9
+  for (let i = 0; i < 5; i++) {
+    addEdgeToMap(edges, nodes[i], nodes[i + 5], EDGE_TYPE.UNDIRECTED, 1);
+  }
+
+  // Inner star: 5-7, 7-9, 9-6, 6-8, 8-5
+  const innerEdges: [number, number][] = [
+    [5, 7], [7, 9], [9, 6], [6, 8], [8, 5],
+  ];
+  for (const [u, v] of innerEdges) {
+    addEdgeToMap(edges, nodes[u], nodes[v], EDGE_TYPE.UNDIRECTED, 1);
+  }
+
+  return { nodes, edges, nodeCounter: nodes.length };
+}
+
+/**
+ * Graph 4: Self-Complementary Cycle C5
+ * 5 vertices cycle whose complement is isomorphic to itself!
+ */
+export function generateSelfComplementaryC5(): GeneratedGraph {
+  return generateCycle(5);
+}
+
+/**
+ * Graph 5: Complete Bipartite Graph K3,3 (Utility Graph)
+ * Kuratowski's non-planar graph with only even-length circuits.
+ */
+export function generateCompleteBipartiteK33(): GeneratedGraph {
+  const nodes: GraphNode[] = [
+    // Partition A (Top)
+    { id: 0, x: -140, y: -80, r: NODE.RADIUS, label: "A1" },
+    { id: 1, x: 0, y: -80, r: NODE.RADIUS, label: "A2" },
+    { id: 2, x: 140, y: -80, r: NODE.RADIUS, label: "A3" },
+    // Partition B (Bottom)
+    { id: 3, x: -140, y: 80, r: NODE.RADIUS, label: "B1" },
+    { id: 4, x: 0, y: 80, r: NODE.RADIUS, label: "B2" },
+    { id: 5, x: 140, y: 80, r: NODE.RADIUS, label: "B3" },
+  ];
+
+  const edges = new Map<number, GraphEdge[]>();
+  nodes.forEach((n) => edges.set(n.id, []));
+
+  for (let a = 0; a < 3; a++) {
+    for (let b = 3; b < 6; b++) {
+      addEdgeToMap(edges, nodes[a], nodes[b], EDGE_TYPE.UNDIRECTED, 1);
+    }
+  }
+
+  return { nodes, edges, nodeCounter: nodes.length };
+}
+

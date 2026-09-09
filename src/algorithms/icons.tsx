@@ -152,8 +152,49 @@ export const CycleDetectionIcon = ({ className }: IconProps) => (
     {/* Cycle edges */}
     <path d="M14 4 L18 8" />
     <path d="M21 11 L18 17" />
-    <path d="M15 20 L9 20" />
-    <path d="M6 17 L3 11" />
-    <path d="M6 8 L10 4" />
   </svg>
 );
+
+/** Eulerian Path & Circuit: Unicursal figure-8 / traversing every edge */
+export const EulerianIcon = ({ className }: IconProps) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+    <circle cx="6" cy="12" r="2.5" fill="currentColor" />
+    <circle cx="12" cy="6" r="2" />
+    <circle cx="18" cy="12" r="2.5" fill="currentColor" />
+    <circle cx="12" cy="18" r="2" />
+    <path d="M7.8 10.5 L10.5 7.5" strokeWidth="2" />
+    <path d="M13.5 7.5 L16.2 10.5" strokeWidth="2" />
+    <path d="M16.2 13.5 L13.5 16.5" strokeWidth="2" />
+    <path d="M10.5 16.5 L7.8 13.5" strokeWidth="2" />
+    <path d="M8.5 12 L15.5 12" strokeWidth="1.5" strokeDasharray="1.5 1.5" />
+  </svg>
+);
+
+/** Hamiltonian Path & Circuit: Visits all vertices */
+export const HamiltonianIcon = ({ className }: IconProps) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+    <circle cx="12" cy="4" r="2" fill="currentColor" />
+    <circle cx="19" cy="9" r="2" fill="currentColor" />
+    <circle cx="17" cy="18" r="2" fill="currentColor" />
+    <circle cx="7" cy="18" r="2" fill="currentColor" />
+    <circle cx="5" cy="9" r="2" fill="currentColor" />
+    <polyline points="12,4 19,9 17,18 7,18 5,9 12,4" strokeWidth="2" />
+  </svg>
+);
+
+/** Connected Components: Disjoint graph components */
+export const ConnectedComponentsIcon = ({ className }: IconProps) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+    {/* Component 1 */}
+    <circle cx="6" cy="8" r="2" fill="currentColor" />
+    <circle cx="10" cy="14" r="2" fill="currentColor" />
+    <path d="M7.5 9.5 L8.5 12.5" strokeWidth="2" />
+    {/* Component 2 */}
+    <circle cx="16" cy="6" r="2" />
+    <circle cx="20" cy="10" r="2" />
+    <circle cx="17" cy="16" r="2" />
+    <path d="M17.5 7.5 L18.5 8.5" />
+    <path d="M19 11.5 L17.5 14.5" />
+  </svg>
+);
+

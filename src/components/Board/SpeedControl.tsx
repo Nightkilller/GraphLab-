@@ -23,10 +23,10 @@ export const SpeedControl = ({
 }: SpeedControlProps) => {
   return (
     <>
-      <ToolbarSeparator />
+      <ToolbarSeparator className="mx-0.5 shrink-0" />
 
       {/* Speed control group */}
-      <div role="group" aria-label="Speed control" className="flex items-center gap-1">
+      <div role="group" aria-label="Speed control" className="flex items-center gap-0.5 shrink-0">
         <Tooltip>
           <TooltipTrigger asChild>
             <ToolbarButton asChild>

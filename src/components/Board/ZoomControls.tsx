@@ -5,6 +5,7 @@ import { ZoomIn, ZoomOut } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ZOOM } from "../../constants/ui";
 import { useGraphStore } from "../../store/graphStore";
+import { isMac } from "../../utils/keyboard";
 
 interface ZoomControlsProps {
   onZoomIn: () => void;
@@ -32,7 +33,7 @@ export const ZoomControls = ({ onZoomIn, onZoomOut, onZoomReset }: ZoomControlsP
             </Button>
           </ToolbarButton>
         </TooltipTrigger>
-        <TooltipContent>Zoom Out</TooltipContent>
+        <TooltipContent>Zoom Out ({isMac ? "⌘-" : "Ctrl+-"})</TooltipContent>
       </Tooltip>
 
       <Tooltip>
@@ -49,7 +50,7 @@ export const ZoomControls = ({ onZoomIn, onZoomOut, onZoomReset }: ZoomControlsP
             </Button>
           </ToolbarButton>
         </TooltipTrigger>
-        <TooltipContent>Reset Zoom</TooltipContent>
+        <TooltipContent>Reset Zoom ({isMac ? "⌘0" : "Ctrl+0"})</TooltipContent>
       </Tooltip>
 
       <Tooltip>
@@ -67,7 +68,7 @@ export const ZoomControls = ({ onZoomIn, onZoomOut, onZoomReset }: ZoomControlsP
             </Button>
           </ToolbarButton>
         </TooltipTrigger>
-        <TooltipContent>Zoom In</TooltipContent>
+        <TooltipContent>Zoom In ({isMac ? "⌘+" : "Ctrl++"})</TooltipContent>
       </Tooltip>
     </>
   );

@@ -6,7 +6,7 @@ import { AlgorithmPicker } from "../ui/algorithm-picker";
 import { GraphGenerator } from "../ui/graph-generator";
 import { Button } from "../ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
-import { RotateCcw, Download, FileCode, Image, Box, Feather, Zap } from "lucide-react";
+import { RotateCcw, Download, FileCode, Image, Box, Feather, Zap, BoxSelect } from "lucide-react";
 import { useGraphStore } from "../../store/graphStore";
 import { useSettingsStore } from "../../store/settingsStore";
 import { SPEED_LEVELS, VisualizationState } from "../../constants/visualization";
@@ -15,6 +15,15 @@ import { exportSvg } from "../../utils/export/exportSvg";
 import { exportPng } from "../../utils/export/exportPng";
 import { export3DPng } from "../../utils/export/export3DPng";
 import { exportCanvasPng } from "../../utils/export/exportCanvasPng";
+import { ImageToGraphModal } from "../ui/image-to-graph-modal";
+import { DegreeSequenceModal } from "./DegreeSequenceModal";
+import { IsomorphismModal } from "./IsomorphismModal";
+import { ComplementModal } from "./ComplementModal";
+import { SubgraphModal } from "./SubgraphModal";
+import { BipartiteModal } from "./BipartiteModal";
+import { AITutorPanel } from "./AITutorPanel";
+import { EdgeVisibilityToggle } from "./EdgeVisibilityToggle";
+import { toast } from "sonner";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -30,6 +39,7 @@ import {
 import { SpeedControl } from "./SpeedControl";
 import { ModeToggle } from "./ModeToggle";
 import { Toolbar, ToolbarButton, ToolbarSeparator } from "../ui/toolbar";
+import { cn } from "../../lib/utils";
 
 interface MainToolbarProps {
   graphRendererRef: RefObject<GraphRendererHandle | null>;
@@ -45,6 +55,8 @@ export function MainToolbar({ graphRendererRef }: MainToolbarProps) {
   const setVisualizationSpeed = useGraphStore((state) => state.setVisualizationSpeed);
   const resetGraph = useGraphStore((state) => state.resetGraph);
   const setVisualizationMode = useGraphStore((state) => state.setVisualizationMode);
+  const selectToolActive = useGraphStore((state) => state.selectToolActive);
+  const setSelectToolActive = useGraphStore((state) => state.setSelectToolActive);
 
   const renderMode = useSettingsStore((state) => state.renderMode);
   const setRenderMode = useSettingsStore((state) => state.setRenderMode);
@@ -99,14 +111,66 @@ export function MainToolbar({ graphRendererRef }: MainToolbarProps) {
   }, [graphRendererRef]);
 
   return (
-    <Toolbar aria-label="Graph controls" className="flex items-center relative p-2 rounded-md bg-(--color-surface) shadow-(--shadow-premium)">
-      <GrainTexture baseFrequency={3} className="rounded-md" />
+    <Toolbar
+      aria-label="Graph controls"
+      className="flex items-center relative p-1 rounded-xl bg-(--color-surface) shadow-(--shadow-premium) gap-1 whitespace-nowrap max-w-full overflow-x-auto no-scrollbar"
+    >
+      <GrainTexture baseFrequency={3} className="rounded-xl" />
 
-      <ModeToggle
-        mode={visualizationMode}
-        onModeChange={setVisualizationMode}
-        disabled={isVisualizing}
-      />
+      {/* Brand logo (icon only) adjacent to the Auto option */}
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <a
+            href="/"
+            title="GraphLab Home"
+            className="flex items-center justify-center p-1 mr-0.5 rounded-md hover:bg-(--color-paper)/80 transition-all select-none group shrink-0"
+            aria-label="GraphLab Home"
+          >
+            <img src="/favicon.svg" alt="GraphLab logo" className="w-5 h-5 rounded transition-transform group-hover:scale-110" />
+          </a>
+        </TooltipTrigger>
+        <TooltipContent>GraphLab Home</TooltipContent>
+      </Tooltip>
+
+      <div className="shrink-0">
+        <ModeToggle
+          mode={visualizationMode}
+          onModeChange={setVisualizationMode}
+          disabled={isVisualizing}
+        />
+      </div>
+
+      {/* Marquee Select Tool */}
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <ToolbarButton asChild>
+            <Button
+              variant={selectToolActive ? "secondary" : "ghost"}
+              size="icon-sm"
+              disabled={isVisualizing}
+              onClick={() => {
+                const next = !selectToolActive;
+                setSelectToolActive(next);
+                if (next) {
+                  toast.info("Marquee Select active: Click & drag on canvas to select vertices, or drag group");
+                }
+              }}
+              aria-label="Marquee Select Tool"
+              className={cn(
+                "z-10 transition-colors shrink-0",
+                selectToolActive && "bg-(--color-accent)/20 text-(--color-accent) border border-(--color-accent)/40 shadow-xs"
+              )}
+            >
+              <BoxSelect size={16} />
+            </Button>
+          </ToolbarButton>
+        </TooltipTrigger>
+        <TooltipContent>
+          {selectToolActive
+            ? "Marquee Select (Active — Drag on canvas to select)"
+            : "Marquee Select Tool (Hold & drag on canvas to select)"}
+        </TooltipContent>
+      </Tooltip>
 
       <AlgorithmPicker
         selectedAlgo={visualizationAlgorithm}
@@ -114,8 +178,20 @@ export function MainToolbar({ graphRendererRef }: MainToolbarProps) {
         disabled={isVisualizing || !hasNodes}
       />
 
-      <ToolbarSeparator />
+      <ToolbarSeparator className="mx-0.5 shrink-0" />
       <GraphGenerator disabled={isVisualizing} />
+      <ImageToGraphModal disabled={isVisualizing} />
+      <DegreeSequenceModal disabled={isVisualizing} />
+      <IsomorphismModal disabled={isVisualizing} />
+      <ComplementModal disabled={isVisualizing} />
+      <BipartiteModal disabled={isVisualizing} />
+      <SubgraphModal disabled={isVisualizing} />
+
+      {/* Edge Visibility Toggle (All / Dim Unused / Hide Unused) */}
+      <EdgeVisibilityToggle disabled={!hasNodes} />
+
+      {/* AI Graph Theory Tutor */}
+      <AITutorPanel disabled={isVisualizing} />
 
       {isDesktop && (
         <SpeedControl
@@ -128,9 +204,9 @@ export function MainToolbar({ graphRendererRef }: MainToolbarProps) {
         />
       )}
 
-      <ToolbarSeparator />
+      <ToolbarSeparator className="mx-0.5 shrink-0" />
 
-      <div className="flex items-center gap-1 md:gap-2">
+      <div className="flex items-center gap-0.5 shrink-0">
         {/* Render Mode Selector - Desktop only */}
         <Select value={renderMode} onValueChange={(value) => setRenderMode(value as "svg" | "canvas" | "3d")} disabled={isVisualizing}>
           <Tooltip>
@@ -140,7 +216,7 @@ export function MainToolbar({ graphRendererRef }: MainToolbarProps) {
                   <Button
                     variant="ghost"
                     size="icon-sm"
-                    className="z-10 hidden lg:inline-flex"
+                    className="z-10 shrink-0 hidden lg:inline-flex"
                     disabled={isVisualizing}
                     aria-label="View mode"
                   >
@@ -198,7 +274,7 @@ export function MainToolbar({ graphRendererRef }: MainToolbarProps) {
                   disabled={isVisualizing || !hasNodes}
                   variant="ghost"
                   size="icon-sm"
-                  className="z-10"
+                  className="z-10 shrink-0"
                   aria-label="Export PNG"
                 >
                   <Download className="h-4 w-4 text-(--color-text)" />
@@ -217,7 +293,7 @@ export function MainToolbar({ graphRendererRef }: MainToolbarProps) {
                       disabled={isVisualizing || !hasNodes}
                       variant="ghost"
                       size="icon-sm"
-                      className="z-10"
+                      className="z-10 shrink-0"
                       aria-label="Export"
                     >
                       <Download className="h-4 w-4 text-(--color-text)" />
@@ -251,7 +327,7 @@ export function MainToolbar({ graphRendererRef }: MainToolbarProps) {
                 disabled={isVisualizing}
                 variant="ghost"
                 size="icon-sm"
-                className="z-10"
+                className="z-10 shrink-0"
                 aria-label="Reset Graph"
               >
                 <RotateCcw className="h-4 w-4 text-(--color-error)" />

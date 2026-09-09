@@ -59,6 +59,7 @@ export interface GraphEdge {
   to: number;
   weight: number;
   type: string;
+  category?: 'original' | 'complement';
 }
 
 /**

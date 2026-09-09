@@ -3,6 +3,7 @@ import { calculateCurve, calculateTextLoc } from "../../../utils/geometry/calc";
 import { GraphEdge } from "../types";
 import { cn } from "@/lib/utils";
 import { useGraphStore, selectIsEdgeFocused } from "../../../store/graphStore";
+import { useSettingsStore } from "../../../store/settingsStore";
 import { EDGE } from "../../../constants/graph";
 
 const WeightLabel = ({ centerX, centerY, weight }: { centerX: number; centerY: number; weight: number }) => (
@@ -46,6 +47,12 @@ export const Edge = memo(function Edge({
     state.visualization.trace.edges.get(`${sourceNodeId}-${edge.to}`)
   );
 
+  // Subscribe to edge visibility setting ('all' | 'dim' | 'hide')
+  const edgeVisibility = useSettingsStore((state) => state.edgeVisibility);
+  const hasHighlightedEdges = useGraphStore(
+    (state) => state.visualization.trace.edges.size > 0
+  );
+
   // Subscribe to keyboard focus state for this edge
   const isFocused = useGraphStore(selectIsEdgeFocused(sourceNodeId, edge.to));
 
@@ -53,17 +60,30 @@ export const Edge = memo(function Edge({
   const undirectedPath = `M${edge.x1},${edge.y1} L${edge.x2},${edge.y2}`;
   const textCoordDirected = calculateTextLoc(edge.x1, edge.y1, edge.x2, edge.y2);
 
-  // Generate edge key - includes type and marker to force Safari to repaint SVG markers
+  const isHighlighted = Boolean(
+    visFlags?.isUsedInCycle ||
+    visFlags?.isUsedInShortestPath ||
+    visFlags?.isUsedInTraversal
+  );
+
+  const isOriginalCompare = edge.category === "original";
+  const isComplementCompare = edge.category === "complement";
+
+  // Generate edge key - includes type, category, and marker
   const getEdgeKey = (markerId?: string) => {
-    const base = `${sourceNodeId}-${edge.to}-${edge.type}`;
+    const base = `${sourceNodeId}-${edge.to}-${edge.type}-${edge.category || "normal"}`;
     return markerId ? `${base}-${markerId}` : base;
   };
 
   const getEdgeColor = () => {
     if (isFocused) return "var(--color-accent-form)";
-    if (visFlags?.isUsedInCycle) return "var(--color-edge-cycle)";
-    if (visFlags?.isUsedInShortestPath) return "var(--color-edge-path)";
-    if (visFlags?.isUsedInTraversal) return "var(--color-edge-traversal)";
+    if (isHighlighted) {
+      if (visFlags?.isUsedInCycle) return "var(--color-edge-cycle)";
+      if (visFlags?.isUsedInShortestPath) return "var(--color-edge-path)";
+      if (visFlags?.isUsedInTraversal) return "var(--color-edge-traversal)";
+    }
+    if (isOriginalCompare) return "#3b82f6"; // Distinct Blue for Original G
+    if (isComplementCompare) return "#ec4899"; // Distinct Pink for Complement G'
     return "var(--color-edge-default)";
   };
 
@@ -75,8 +95,19 @@ export const Edge = memo(function Edge({
     return "arrowhead-default";
   };
 
+  const getEdgeOpacity = () => {
+    // If visualizing or showing results, dim or hide non-path edges if requested
+    if ((isVisualizing || hasHighlightedEdges) && !isHighlighted) {
+      if (edgeVisibility === "hide") return 0;
+      if (edgeVisibility === "dim") return 0.14;
+    }
+    if (isOriginalCompare) return 0.8;
+    return 1;
+  };
+
   const edgeColor = getEdgeColor();
   const arrowMarkerId = getArrowMarkerId();
+  const edgeOpacity = getEdgeOpacity();
   const hoverColor = "var(--color-accent-form)";
 
   const handleClick = (e: React.MouseEvent) => {
@@ -124,7 +155,11 @@ export const Edge = memo(function Edge({
     const centerY = (edge.y1 + 2 * textCoordDirected.c1y + edge.y2) / 4;
 
     return (
-      <g key={getEdgeKey(arrowMarkerId)}>
+      <g
+        key={getEdgeKey(arrowMarkerId)}
+        className={edgeOpacity === 0 ? "hidden" : undefined}
+        style={{ opacity: edgeOpacity, transition: "opacity 0.2s ease" }}
+      >
         {/* Invisible wider path for easier click/tap targeting */}
         <path
           d={directedPath}
@@ -146,7 +181,8 @@ export const Edge = memo(function Edge({
             // Only set stroke via style when not focused (CSS class handles focused state)
             ...(!isFocused && {
               stroke: edgeColor,
-              strokeWidth: getStrokeWidth(),
+              strokeWidth: isComplementCompare ? 2.75 : getStrokeWidth(),
+              strokeDasharray: isOriginalCompare ? "6 4" : undefined,
             }),
           }}
           className={cn(
@@ -167,7 +203,11 @@ export const Edge = memo(function Edge({
   const centerY = (edge.y1 + edge.nodeY2) / 2;
 
   return (
-    <g key={getEdgeKey()}>
+    <g
+      key={getEdgeKey()}
+      className={edgeOpacity === 0 ? "hidden" : undefined}
+      style={{ opacity: edgeOpacity, transition: "opacity 0.2s ease" }}
+    >
       {/* Invisible wider path for easier click/tap targeting */}
       <path
         d={undirectedPath}
@@ -189,7 +229,8 @@ export const Edge = memo(function Edge({
           // Only set stroke via style when not focused (CSS class handles focused state)
           ...(!isFocused && {
             stroke: edgeColor,
-            strokeWidth: getStrokeWidth(),
+            strokeWidth: isComplementCompare ? 3 : getStrokeWidth(),
+            strokeDasharray: isOriginalCompare ? "6 4" : undefined,
           }),
         }}
         className={cn(

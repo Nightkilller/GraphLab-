@@ -589,5 +589,100 @@ describe('graphStore', () => {
       expect(data.edges.get(1)?.[0]).toBe(originalEdge)
     })
   })
+
+  describe('appendGraph', () => {
+    it('initializes graph when existing graph is empty', () => {
+      const { appendGraph } = useGraphStore.getState()
+      const incomingNodes = [
+        { id: 1, x: 50, y: 50, r: 24 },
+        { id: 2, x: 150, y: 50, r: 24 },
+      ]
+      const incomingEdges = new Map()
+      incomingEdges.set(1, [{ from: 1, to: 2, x1: 50, y1: 50, x2: 150, y2: 50, nodeX2: 150, nodeY2: 50, weight: 1, type: 'directed' as const }])
+      incomingEdges.set(2, [])
+
+      appendGraph(incomingNodes, incomingEdges, 2)
+
+      const { data } = useGraphStore.getState()
+      expect(data.nodes).toHaveLength(2)
+      expect(data.nodes[0].id).toBe(1)
+      expect(data.nodes[1].id).toBe(2)
+      expect(data.nodeCounter).toBe(2)
+    })
+
+    it('positions incoming graph to the right without ID collisions and auto-selects new nodes', () => {
+      const { addNode, appendGraph } = useGraphStore.getState()
+      // Create existing node at (100, 100) with id: 1
+      addNode(100, 100)
+
+      const incomingNodes = [
+        { id: 1, x: 0, y: 0, r: 24 },
+        { id: 2, x: 50, y: 0, r: 24 },
+      ]
+      const incomingEdges = new Map()
+      incomingEdges.set(1, [{ from: 1, to: 2, x1: 0, y1: 0, x2: 50, y2: 0, nodeX2: 50, nodeY2: 0, weight: 1, type: 'directed' as const }])
+      incomingEdges.set(2, [])
+
+      appendGraph(incomingNodes, incomingEdges, 2)
+
+      const { data, selection } = useGraphStore.getState()
+      // Total nodes should be 3 (existing 1 + new 2)
+      expect(data.nodes).toHaveLength(3)
+
+      // Existing node intact
+      expect(data.nodes[0].id).toBe(1)
+      expect(data.nodes[0].x).toBe(100)
+
+      // New nodes remapped to IDs 2 and 3
+      const newNodes = data.nodes.slice(1)
+      expect(newNodes[0].id).toBe(2)
+      expect(newNodes[1].id).toBe(3)
+
+      // Offset check: max existing X was 100. Gap is 180. Min incoming X was 0.
+      // Expected new X: 100 + 180 = 280 for first node
+      expect(newNodes[0].x).toBe(280)
+      expect(newNodes[1].x).toBe(330)
+
+      // Edges remapped to new IDs
+      const edgeFrom2 = data.edges.get(2)
+      expect(edgeFrom2).toBeDefined()
+      expect(edgeFrom2?.[0].from).toBe(2)
+      expect(edgeFrom2?.[0].to).toBe(3)
+
+      // Auto-selection contains newly appended node IDs (2 and 3)
+      expect(selection.nodeIds.has(2)).toBe(true)
+      expect(selection.nodeIds.has(3)).toBe(true)
+      expect(selection.nodeIds.has(1)).toBe(false)
+    })
+  })
+
+  describe('selectToolActive', () => {
+    it('toggles selectToolActive flag correctly', () => {
+      const { setSelectToolActive } = useGraphStore.getState()
+      expect(useGraphStore.getState().selectToolActive).toBe(false)
+
+      setSelectToolActive(true)
+      expect(useGraphStore.getState().selectToolActive).toBe(true)
+
+      setSelectToolActive(false)
+      expect(useGraphStore.getState().selectToolActive).toBe(false)
+    })
+  })
+
+  describe('Canvas Node Addition', () => {
+    it('successfully adds nodes sequentially without throwing', () => {
+      const { addNode } = useGraphStore.getState()
+      addNode(150, 250)
+      addNode(300, 400)
+      addNode(450, 500)
+
+      const { data } = useGraphStore.getState()
+      expect(data.nodes).toHaveLength(3)
+      expect(data.nodes.map(n => n.id)).toEqual([1, 2, 3])
+      expect(data.nodeCounter).toBe(3)
+      expect(data.stackingOrder.size).toBe(3)
+    })
+  })
 })
+
 

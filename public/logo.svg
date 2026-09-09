@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none">
+  <!-- Axes: vertical down to origin, then horizontal right -->
+  <path d="M 23 23 L 23 77 L 77 77" stroke="currentColor" stroke-width="6.8" stroke-linecap="round" stroke-linejoin="round" />
+  <!-- Zigzag chart line: origin -> peak1 -> trough1 -> peak2 -> trough2 -> end -->
+  <path d="M 23 77 L 33.5 58 L 41.5 66 L 51.5 41.5 L 60 56.5 L 77 23.6" stroke="currentColor" stroke-width="6.8" stroke-linecap="round" stroke-linejoin="round" />
+</svg>

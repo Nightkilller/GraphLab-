@@ -12,15 +12,18 @@ import { THEME, type Theme } from "@/theme/constants";
 import { STORE_NAME } from "../constants/store";
 
 type RenderMode = 'svg' | 'canvas' | '3d';
+export type EdgeVisibility = 'all' | 'dim' | 'hide';
 
 interface SettingsState {
   theme: Theme;
   renderMode: RenderMode;
+  edgeVisibility: EdgeVisibility;
 }
 
 interface SettingsActions {
   setTheme: (theme: Theme) => void;
   setRenderMode: (mode: RenderMode) => void;
+  setEdgeVisibility: (visibility: EdgeVisibility) => void;
 }
 
 type SettingsStore = SettingsState & SettingsActions;
@@ -31,6 +34,7 @@ export const useSettingsStore = create<SettingsStore>()(
       // State
       theme: THEME.SYSTEM,
       renderMode: 'svg' as RenderMode,
+      edgeVisibility: 'all' as EdgeVisibility,
 
       // Actions
       setTheme: (theme) => {
@@ -38,6 +42,9 @@ export const useSettingsStore = create<SettingsStore>()(
       },
       setRenderMode: (renderMode) => {
         set({ renderMode });
+      },
+      setEdgeVisibility: (edgeVisibility) => {
+        set({ edgeVisibility });
       },
     }),
     {

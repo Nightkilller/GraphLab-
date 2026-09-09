@@ -18,10 +18,12 @@ interface ShortcutConfig {
 
 const SHORTCUTS: Record<string, ShortcutConfig> = {
   undo:                { key: "z",                       modKey: true, shiftKey: false, preventDefault: true },
-  redo:                { key: ["z", "y"],                modKey: true, shiftKey: true,  preventDefault: true },
+  redo:                { key: ["z", "y"],                modKey: true,                  preventDefault: true },
   deleteSelectedNodes: { key: ["Delete", "Backspace"],                                  preventDefault: true },
-  zoomIn:              { key: ["+", "="],                modKey: true,                  preventDefault: true },
-  zoomOut:             { key: "-",                       modKey: true,                  preventDefault: true },
+  selectAll:           { key: "a",                       modKey: true, shiftKey: false, preventDefault: true },
+  zoomIn:              { key: ["+", "=", "Add"],         modKey: true,                  preventDefault: true },
+  zoomOut:             { key: ["-", "_", "Subtract"],    modKey: true,                  preventDefault: true },
+  resetZoom:           { key: "0",                       modKey: true,                  preventDefault: true },
   stepForward:         { key: ["ArrowRight", "l", "L"],                                 preventDefault: true },
   stepBackward:        { key: ["ArrowLeft",  "h", "H"],                                 preventDefault: true },
   jumpToStart:         { key: "Home",                                                    preventDefault: true },
@@ -74,6 +76,12 @@ export function useGraphActions() {
   const deselect = useCallback(() => {
     const s = useGraphStore.getState();
     if (!selectIsInStepMode(s)) s.selectNode(null);
+  }, []);
+
+  const selectAll = useCallback(() => {
+    const s = useGraphStore.getState();
+    if (s.data.nodes.length === 0 || s.visualization.state === VisualizationState.RUNNING) return;
+    s.selectNodes(s.data.nodes.map((n) => n.id));
   }, []);
 
   const clearAlgorithm = useCallback(() => {
@@ -163,8 +171,10 @@ export function useGraphActions() {
       { fn: undo,                shortcut: SHORTCUTS.undo },
       { fn: redo,                shortcut: SHORTCUTS.redo,           isRedo: true },
       { fn: deleteSelectedNodes, shortcut: SHORTCUTS.deleteSelectedNodes },
+      { fn: selectAll,           shortcut: SHORTCUTS.selectAll },
       { fn: zoomIn,              shortcut: SHORTCUTS.zoomIn },
       { fn: zoomOut,             shortcut: SHORTCUTS.zoomOut },
+      { fn: resetZoom,           shortcut: SHORTCUTS.resetZoom },
       { fn: stepForward,         shortcut: SHORTCUTS.stepForward,    stepModeOnly: true },
       { fn: stepBackward,        shortcut: SHORTCUTS.stepBackward,   stepModeOnly: true },
       { fn: jumpToStart,         shortcut: SHORTCUTS.jumpToStart,    stepModeOnly: true },
@@ -177,14 +187,16 @@ export function useGraphActions() {
       if (stepModeOnly && !isInStepMode) continue;
 
       const { key, modKey, shiftKey, preventDefault } = shortcut;
-      const keys = Array.isArray(key) ? key : [key];
-      if (!keys.includes(e.key)) continue;
+      const keys = (Array.isArray(key) ? key : [key]).map((item) => item.toLowerCase());
+      const eventKey = e.key.toLowerCase();
+
+      if (!keys.includes(eventKey)) continue;
       if (modKey && !isModKey(e)) continue;
       if (modKey === false && isModKey(e)) continue;
 
-      // Redo: Cmd+Shift+Z or Cmd+Y
+      // Redo: (Ctrl/Cmd + Shift + Z) OR (Ctrl/Cmd + Y on Windows/Linux)
       if (isRedo) {
-        if (!(e.key === "z" && e.shiftKey) && e.key !== "y") continue;
+        if (!(eventKey === "z" && e.shiftKey) && eventKey !== "y") continue;
       } else {
         if (shiftKey === true && !e.shiftKey) continue;
         if (shiftKey === false && e.shiftKey) continue;
@@ -194,12 +206,13 @@ export function useGraphActions() {
       fn();
       return;
     }
-  }, [undo, redo, deleteSelectedNodes, zoomIn, zoomOut, stepForward, stepBackward, jumpToStart, jumpToEnd, togglePlay, stopVisualization, clearAlgorithm, deselect]);
+  }, [undo, redo, deleteSelectedNodes, selectAll, zoomIn, zoomOut, resetZoom, stepForward, stepBackward, jumpToStart, jumpToEnd, togglePlay, stopVisualization, clearAlgorithm, deselect]);
 
   return {
     undo,
     redo,
     deleteSelectedNodes,
+    selectAll,
     zoomIn,
     zoomOut,
     resetZoom,

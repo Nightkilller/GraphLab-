@@ -1,7 +1,7 @@
 import { Suspense, useRef, useImperativeHandle, lazy, type Ref } from "react";
 import { AnimatePresence } from "motion/react";
 import * as m from "motion/react-m";
-import { ErrorBoundary } from "react-error-boundary";
+import { ErrorBoundary, type FallbackProps } from "react-error-boundary";
 import { AlertTriangle } from "lucide-react";
 import { Graph, type GraphHandle } from "../Graph/Graph";
 import { CanvasGraph, type CanvasGraphHandle } from "../GraphCanvas/CanvasGraph";
@@ -26,6 +26,22 @@ function Graph3DErrorFallback() {
       </p>
       <Button onClick={() => setRenderMode('svg')} variant="secondary">
         Switch to standard view
+      </Button>
+    </div>
+  );
+}
+
+function Graph2DErrorFallback({ error, resetErrorBoundary }: FallbackProps) {
+  const errorMessage = error instanceof Error ? error.message : String(error || "An unexpected error occurred while rendering the graph.");
+  return (
+    <div className="flex flex-col items-center justify-center h-full gap-4 p-8 text-center bg-(--color-paper)">
+      <AlertTriangle className="w-12 h-12 text-(--color-error)" />
+      <h2 className="text-lg font-semibold text-(--color-text)">Canvas Rendering Error</h2>
+      <p className="text-sm text-(--color-text-muted) max-w-sm">
+        {errorMessage}
+      </p>
+      <Button onClick={resetErrorBoundary} variant="secondary">
+        Reload Canvas
       </Button>
     </div>
   );
@@ -91,7 +107,9 @@ export const GraphRenderer = ({
           exit={{ opacity: 0, filter: 'blur(8px)' }}
           transition={{ duration: 0.15 }}
         >
-          <CanvasGraph ref={canvasGraphRef} />
+          <ErrorBoundary FallbackComponent={Graph2DErrorFallback}>
+            <CanvasGraph ref={canvasGraphRef} />
+          </ErrorBoundary>
         </m.div>
       ) : (
         <m.div
@@ -102,7 +120,9 @@ export const GraphRenderer = ({
           exit={{ opacity: 0, filter: 'blur(8px)' }}
           transition={{ duration: 0.15 }}
         >
-          <Graph ref={graphRef} />
+          <ErrorBoundary FallbackComponent={Graph2DErrorFallback}>
+            <Graph ref={graphRef} />
+          </ErrorBoundary>
         </m.div>
       )}
     </AnimatePresence>

@@ -4,7 +4,7 @@ import type { HoveredEdge, PreviewEdge, SelectionBox } from "../components/Graph
 import { type EdgeColorState, type NodeColorState, getCSSVar } from "@/theme";
 import { applyViewportTransform, resetTransform } from "../components/GraphCanvas/ViewportTransform";
 import { drawGrid } from "../components/GraphCanvas/renderers/gridRenderer";
-import { drawNode, drawConnectors } from "../components/GraphCanvas/renderers/nodeRenderer";
+import { drawNode, drawConnectors, drawNodeDegreeBadge } from "../components/GraphCanvas/renderers/nodeRenderer";
 import { drawEdge, drawPreviewEdge, drawSelectionBox } from "../components/GraphCanvas/renderers/edgeRenderer";
 
 interface UseCanvasRenderLoopProps {
@@ -138,6 +138,29 @@ export function useCanvasRenderLoop({
 
       if (isHovered && !isVisualizing && !currentAlgorithm && !edgeDragSource) {
         drawConnectors(ctx, node, true);
+
+        let undirectedCount = 0;
+        let inDeg = 0;
+        let outDeg = 0;
+        let isDirected = false;
+
+        edges.forEach((list, u) => {
+          for (const e of list) {
+            if (e.type === 'directed') {
+              isDirected = true;
+              if (u === nodeId) outDeg++;
+              if (e.to === nodeId) inDeg++;
+            } else {
+              if (u === nodeId) undirectedCount++;
+            }
+          }
+        });
+
+        const degreeText = isDirected
+          ? `deg: ${inDeg + outDeg} (${inDeg} in / ${outDeg} out)`
+          : `deg: ${undirectedCount}`;
+
+        drawNodeDegreeBadge(ctx, node, degreeText);
       }
     }
 

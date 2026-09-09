@@ -6,6 +6,7 @@ import type { HoveredEdge, PreviewEdge, SelectionBox } from "../components/Graph
 import { canCreateEdge } from "../utils/graph/edgeUtils";
 import { findToNodeForTouchBasedDevices } from "../utils/geometry/calc";
 import { DRAG_THRESHOLD, TIMING } from "../constants/ui";
+import { useGraphStore } from "../store/graphStore";
 
 interface DragState {
   type: 'none' | 'pending-pan' | 'pan' | 'pending-node' | 'node' | 'box-select' | 'edge-create';
@@ -134,8 +135,9 @@ export function useCanvasInteractions({
     // Use body-only hit test: selection and drag only trigger on the visible node circle
     const hitNode = hitTestNodesBody(world.x, world.y, nodes, stackingOrder);
 
-    // Box selection (Shift + empty canvas body)
-    if (e.shiftKey && !hitNode && !currentAlgorithm) {
+    const isSelectToolActive = useGraphStore.getState().selectToolActive;
+    // Box selection (Shift + empty canvas body OR selectToolActive)
+    if ((e.shiftKey || isSelectToolActive) && !hitNode && !currentAlgorithm) {
       setDragState({
         type: 'box-select',
         startX: e.clientX,
@@ -392,7 +394,9 @@ export function useCanvasInteractions({
         } else if (selectedNodeIds.size > 0) {
           selectNode(null);
         } else if (!currentAlgorithm && !isVisualizing) {
-          addNode(world.x, world.y);
+          if (!useGraphStore.getState().selectToolActive) {
+            addNode(world.x, world.y);
+          }
         }
       }
     }

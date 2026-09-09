@@ -308,3 +308,62 @@ export function drawConnectors(
 
   ctx.restore();
 }
+
+/**
+ * Draw node degree tooltip badge on hover in Canvas mode.
+ */
+export function drawNodeDegreeBadge(
+  ctx: CanvasRenderingContext2D,
+  node: GraphNode,
+  degreeText: string
+): void {
+  ctx.save();
+  const radius = node.r;
+  const isTop = node.y - radius - 28 >= 8;
+  const badgeY = isTop ? node.y - radius - 28 : node.y + radius + 14;
+  const badgeWidth = Math.max(54, degreeText.length * 6.5 + 16);
+  const badgeHeight = 19;
+  const badgeX = node.x - badgeWidth / 2;
+
+  // Drop shadow
+  ctx.shadowColor = 'rgba(0, 0, 0, 0.22)';
+  ctx.shadowBlur = 4;
+  ctx.shadowOffsetX = 0;
+  ctx.shadowOffsetY = 2;
+
+  // Background pill
+  ctx.fillStyle = getCSSVar('--color-surface');
+  ctx.beginPath();
+  ctx.roundRect(badgeX, badgeY, badgeWidth, badgeHeight, 9.5);
+  ctx.fill();
+
+  // Border
+  ctx.shadowColor = 'transparent';
+  ctx.strokeStyle = getCSSVar('--color-accent');
+  ctx.lineWidth = 1.2;
+  ctx.stroke();
+
+  // Caret
+  ctx.fillStyle = getCSSVar('--color-accent');
+  ctx.beginPath();
+  if (isTop) {
+    ctx.moveTo(node.x - 3.5, badgeY + badgeHeight);
+    ctx.lineTo(node.x + 3.5, badgeY + badgeHeight);
+    ctx.lineTo(node.x, badgeY + badgeHeight + 3.5);
+  } else {
+    ctx.moveTo(node.x - 3.5, badgeY);
+    ctx.lineTo(node.x + 3.5, badgeY);
+    ctx.lineTo(node.x, badgeY - 3.5);
+  }
+  ctx.closePath();
+  ctx.fill();
+
+  // Text
+  ctx.font = 'bold 10px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillStyle = getCSSVar('--color-text');
+  ctx.fillText(degreeText, node.x, badgeY + badgeHeight / 2 + 1);
+
+  ctx.restore();
+}

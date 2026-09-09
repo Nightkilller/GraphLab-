@@ -60,6 +60,15 @@
   background: var(--color-surface-hover);
 }
 
+/* Hide scrollbar while preserving scrollability */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
 /* Edge drag: hide connectors and highlight hit areas (pure interaction) */
 svg[data-edge-dragging] .edge-connector,
 svg[data-edge-dragging] .edge-hit-area,

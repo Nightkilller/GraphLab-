@@ -4,7 +4,6 @@ import { Popover, PopoverContent, PopoverTrigger } from "../popover";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "../tabs";
 import { Button } from "../button";
 import { ToolbarButton } from "../toolbar";
-import { cn } from "../../../lib/utils";
 import { useGraphStore } from "../../../store/graphStore";
 import { type GeneratedGraph } from "../../../utils/graph/graphGenerator";
 import { TemplatesTab } from "./templates-tab";
@@ -16,10 +15,10 @@ interface GraphGeneratorProps {
 
 export const GraphGenerator = ({ disabled }: GraphGeneratorProps) => {
   const [open, setOpen] = useState(false);
-  const setGraph = useGraphStore((state) => state.setGraph);
+  const appendGraph = useGraphStore((state) => state.appendGraph);
 
   const handleGenerate = (result: GeneratedGraph) => {
-    setGraph(result.nodes, result.edges, result.nodeCounter);
+    appendGraph(result.nodes, result.edges, result.nodeCounter);
     setOpen(false);
   };
 
@@ -30,10 +29,7 @@ export const GraphGenerator = ({ disabled }: GraphGeneratorProps) => {
           <Button
             disabled={disabled}
             aria-label="Generate graph"
-            className={cn(
-              "w-auto md:w-[110px] gap-1.5",
-              "justify-center"
-            )}
+            className="w-auto px-2 h-8 gap-1.5 justify-center shrink-0"
             size='sm'
           >
             <Sparkles className="w-4 h-4 shrink-0" />
@@ -42,7 +38,7 @@ export const GraphGenerator = ({ disabled }: GraphGeneratorProps) => {
         </ToolbarButton>
       </PopoverTrigger>
       <PopoverContent
-        className="w-[300px] p-0"
+        className="w-[340px] max-h-[520px] overflow-y-auto p-0"
         align="center"
         sideOffset={12}
       >

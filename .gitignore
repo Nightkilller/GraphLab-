@@ -114,3 +114,8 @@ dist
 # Agents
 .agents
 .interface-design
+
+# macOS
+.DS_Store
+**/.DS_Store
+

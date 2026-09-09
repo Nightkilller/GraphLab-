@@ -52,6 +52,7 @@ export function Graph({ ref }: { ref?: Ref<GraphHandle> }) {
   const setViewportPan = useGraphStore((state) => state.setViewportPan);
   const setViewportZoom = useGraphStore((state) => state.setViewportZoom);
   const setVisualizationAlgorithm = useGraphStore((state) => state.setVisualizationAlgorithm);
+  const selectToolActive = useGraphStore((state) => state.selectToolActive);
 
   // Shared algorithm node click handler
   const { handleNodeClick } = useAlgorithmNodeClick();
@@ -142,17 +143,19 @@ export function Graph({ ref }: { ref?: Ref<GraphHandle> }) {
     isGestureActive,
   });
 
-  // Combined pointer down handler: box selection takes priority when Shift is held
+  // Combined pointer down handler: box selection takes priority when Shift is held or selectToolActive is true
   const handleCanvasPointerDown = useCallback(
     (event: React.PointerEvent<SVGSVGElement>) => {
-      // Try box selection first (only activates with Shift)
+      // Try box selection first (activates with Shift or select tool active)
       if (handleBoxSelectionPointerDown(event)) {
         return;
       }
+      // When select tool is active, don't pan on drag
+      if (selectToolActive) return;
       // Fall back to panning
       handlePanPointerDown(event);
     },
-    [handleBoxSelectionPointerDown, handlePanPointerDown]
+    [handleBoxSelectionPointerDown, handlePanPointerDown, selectToolActive]
   );
 
   // Edge dragging hook
@@ -195,13 +198,13 @@ export function Graph({ ref }: { ref?: Ref<GraphHandle> }) {
       selectNode(null);
     }
 
-    // Create node on empty canvas (not during visualization or algorithm selection or box selection)
-    if (!isNode && !hasSelectedNodes && !isDraggingEdge.current && !isDraggingCanvas.current && !isBoxSelecting.current && !isVisualizing && !currentAlgorithm) {
+    // Create node on empty canvas (not during visualization, algorithm selection, box selection, or select tool mode)
+    if (!isNode && !hasSelectedNodes && !isDraggingEdge.current && !isDraggingCanvas.current && !isBoxSelecting.current && !isVisualizing && !currentAlgorithm && !selectToolActive) {
       const { x, y } = screenToSvgCoords(event.clientX, event.clientY);
       addNode(x, y);
       haptics.medium();
     }
-  }, [currentAlgorithm, isVisualizing, handleNodeClick, hasSelectedNodes, screenToSvgCoords, selectNode, addNode, isDraggingEdge, isDraggingCanvas, isBoxSelecting, setVisualizationAlgorithm, haptics]);
+  }, [currentAlgorithm, isVisualizing, handleNodeClick, hasSelectedNodes, screenToSvgCoords, selectNode, addNode, isDraggingEdge, isDraggingCanvas, isBoxSelecting, setVisualizationAlgorithm, selectToolActive, haptics]);
 
   // Node label editing
   const { handleLabelEdit, labelPopupElement } = useNodeLabelEdit({

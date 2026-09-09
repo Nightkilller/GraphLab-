@@ -1,10 +1,10 @@
-import React, { useRef, useCallback, useState, memo } from "react";
+import React, { useRef, useCallback, useState, useMemo, memo } from "react";
 import { useReducedMotion } from "motion/react";
 import * as m from "motion/react-m";
 import { cn } from "@/lib/utils";
 import { EdgeConnector } from "../EdgeConnector";
 import { DRAG_THRESHOLD, STROKE_ANIMATION, NODE_STROKE } from "../../../constants/ui";
-import { NODE } from "../../../constants/graph";
+import { NODE, EDGE_TYPE } from "../../../constants/graph";
 import { useGraphStore } from "../../../store/graphStore";
 import { useShallow } from "zustand/shallow";
 import { useIsDesktop } from "../../../hooks/useMediaQuery";
@@ -65,6 +65,37 @@ export const Node = memo(function Node(props: NodeProps) {
   const prefersReducedMotion = useReducedMotion();
   const isDesktop = useIsDesktop();
   const haptics = useAppHaptics();
+
+  // Derived degree info: computed only when hovered to keep additions instantaneous and avoid un-cached getSnapshot loops
+  const degreeInfo = useMemo(() => {
+    if (!isHovered && !isBodyHovered) {
+      return { degree: 0, inDegree: 0, outDegree: 0, isDirected: false };
+    }
+    const edges = useGraphStore.getState().data.edges;
+    let undirectedCount = 0;
+    let inDeg = 0;
+    let outDeg = 0;
+    let isDirected = false;
+
+    edges.forEach((list, u) => {
+      for (const e of list) {
+        if (e.type === EDGE_TYPE.DIRECTED) {
+          isDirected = true;
+          if (u === nodeId) outDeg++;
+          if (e.to === nodeId) inDeg++;
+        } else {
+          if (u === nodeId || e.to === nodeId) undirectedCount++;
+        }
+      }
+    });
+
+    return {
+      degree: isDirected ? inDeg + outDeg : undirectedCount,
+      inDegree: inDeg,
+      outDegree: outDeg,
+      isDirected,
+    };
+  }, [isHovered, isBodyHovered, nodeId]);
 
   // Group-level hover (hit area + body) — used for connector visibility
   const handleMouseEnter = useCallback(() => {
@@ -272,7 +303,9 @@ export const Node = memo(function Node(props: NodeProps) {
         cx={node.x}
         cy={node.y}
         id={node.id.toString()}
-      />
+      >
+        <title>{`Vertex ${node.label || node.id}: Degree ${degreeInfo.degree}${degreeInfo.isDirected ? ` (${degreeInfo.inDegree} in / ${degreeInfo.outDegree} out)` : ""}`}</title>
+      </m.circle>
       {/* Crosshatch pattern overlay — plain circle with CSS transition instead of motion.circle */}
       <circle
         cx={node.x}
@@ -283,6 +316,51 @@ export const Node = memo(function Node(props: NodeProps) {
         className="pointer-events-none"
         style={{ transition: prefersReducedMotion ? 'none' : `r ${STROKE_ANIMATION.DURATION}s` }}
       />
+      {/* Vertex Degree Tooltip Badge on Hover */}
+      {(isHovered || isBodyHovered) && !isVisualizing && (
+        <g className="pointer-events-none select-none">
+          {(() => {
+            const isTop = node.y - node.r - 28 >= 8;
+            const badgeY = isTop ? node.y - node.r - 28 : node.y + node.r + 14;
+            const badgeText = degreeInfo.isDirected
+              ? `deg: ${degreeInfo.degree} (${degreeInfo.inDegree} in / ${degreeInfo.outDegree} out)`
+              : `deg: ${degreeInfo.degree}`;
+            const badgeWidth = degreeInfo.isDirected ? 120 : 54;
+
+            return (
+              <g>
+                <rect
+                  x={node.x - badgeWidth / 2}
+                  y={badgeY}
+                  width={badgeWidth}
+                  height={19}
+                  rx={9.5}
+                  className="fill-(--color-surface) stroke-(--color-accent)"
+                  strokeWidth={1.2}
+                  style={{ filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.2))" }}
+                />
+                <polygon
+                  points={
+                    isTop
+                      ? `${node.x - 3.5},${badgeY + 19} ${node.x + 3.5},${badgeY + 19} ${node.x},${badgeY + 22.5}`
+                      : `${node.x - 3.5},${badgeY} ${node.x + 3.5},${badgeY} ${node.x},${badgeY - 3.5}`
+                  }
+                  className="fill-(--color-accent)"
+                />
+                <text
+                  x={node.x}
+                  y={badgeY + 10.5}
+                  textAnchor="middle"
+                  dominantBaseline="central"
+                  className="text-[10px] font-bold fill-(--color-text) tracking-tight"
+                >
+                  {badgeText}
+                </text>
+              </g>
+            );
+          })()}
+        </g>
+      )}
       {/* Edge Connectors - only mounted on hover to avoid unnecessary renders during drag */}
       {connectorsVisible && (
         <>

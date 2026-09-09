@@ -4,13 +4,13 @@ import { Button } from "../components/ui/button";
 
 const algorithms = [
   { id: "dijkstra", name: "Dijkstra's" },
-  { id: "bellman-ford", name: "Bellman-Ford" },
   { id: "bfs", name: "BFS" },
   { id: "dfs", name: "DFS" },
   { id: "bfs-pathfinding", name: "BFS Pathfinding" },
   { id: "dfs-pathfinding", name: "DFS Pathfinding" },
-  { id: "prims", name: "Prim's" },
   { id: "cycle-detection", name: "Cycle Detection" },
+  { id: "eulerian", name: "Eulerian Path/Circuit" },
+  { id: "hamiltonian", name: "Hamiltonian Path/Circuit" },
 ];
 
 export interface AlgorithmPageProps {
@@ -55,9 +55,11 @@ export function AlgorithmLanding({
       <nav className="relative max-w-3xl mx-auto px-6 pt-6 md:pt-10">
         <a
           href="/"
-          className="focus-ring-animated inline-flex items-center gap-2.5 rounded-md"
+          className="focus-ring-animated inline-flex items-center gap-2.5 rounded-md group"
+          title="GraphLab Home"
         >
-          <img src="https://ik.imagekit.io/lapstjup/graphisual/tr:w-256/logo.png" alt="Graphisual logo" className="w-8 h-8 rounded-md" />
+          <img src="/logo.png" alt="GraphLab logo" className="w-8 h-8 rounded-lg object-contain bg-(--color-surface) p-0.5 border border-(--color-divider) shadow-xs transition-transform group-hover:scale-105" />
+          <span className="font-bold text-base tracking-tight text-(--color-text)">GraphLab</span>
         </a>
       </nav>
 
@@ -185,7 +187,7 @@ export function AlgorithmLanding({
               href="/"
               className="focus-ring-animated inline-flex items-center gap-2 rounded-md hover:text-(--color-text)"
             >
-              <span className="font-semibold">Graphisual</span>
+              <span className="font-semibold">GraphLab</span>
             </a>
             <p>Interactive graph editor and algorithm visualizer</p>
           </div>

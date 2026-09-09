@@ -8,8 +8,8 @@ export function pwaPlugin() {
     registerType: "autoUpdate",
     includeAssets: ["favicon.png", "apple-touch-icon.png"],
     manifest: {
-      name: "Graphisual",
-      short_name: "Graphisual",
+      name: "GraphLab",
+      short_name: "GraphLab",
       description: "Interactive graph editor and algorithm visualizer",
       theme_color: "#0a0a0f",
       background_color: "#0a0a0f",

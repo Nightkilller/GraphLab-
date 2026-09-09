@@ -68,6 +68,7 @@ interface GraphState {
   visualization: Visualization;
   selection: Selection;
   viewport: Viewport;
+  selectToolActive: boolean;
 }
 
 interface GraphActions {
@@ -79,6 +80,7 @@ interface GraphActions {
   bringNodesToFront: (nodeIds: number[]) => void;
   addEdge: (fromNode: GraphNode, toNode: GraphNode) => void;
   setGraph: (nodes: GraphNode[], edges: Map<number, GraphEdge[]>, nodeCounter: number) => void;
+  appendGraph: (nodes: GraphNode[], edges: Map<number, GraphEdge[]>, nodeCounter: number) => void;
   updateEdgeType: (fromNodeId: number, toNodeId: number, newType: EdgeType) => void;
   updateEdgeWeight: (fromNodeId: number, toNodeId: number, newWeight: number) => void;
   reverseEdge: (fromNodeId: number, toNodeId: number) => void;
@@ -97,6 +99,7 @@ interface GraphActions {
   clearEdgeSelection: () => void;
   setFocusedEdge: (from: number, to: number) => void;
   clearFocusedEdge: () => void;
+  setSelectToolActive: (active: boolean) => void;
 
   // === Multi-Node Movement ===
   moveNodes: (nodeIds: number[], deltaX: number, deltaY: number) => void;
@@ -185,6 +188,7 @@ const initialState: GraphState = {
   visualization: initialVisualization,
   selection: initialSelection,
   viewport: initialViewport,
+  selectToolActive: false,
 };
 
 // ============================================================================
@@ -416,6 +420,124 @@ export const useGraphStore = create<GraphStore>()(
             selection: { nodeIds: new Set<number>(), edge: null, focusedEdge: null },
             visualization: { ...visualization, input: null },
             viewport: { zoom: 1, pan: { x: 0, y: 0 } }, // Reset viewport to center on new graph
+          });
+        }),
+
+        appendGraph: autoHistory((incomingNodes: GraphNode[], incomingEdges: Map<number, GraphEdge[]>, incomingNodeCounter: number) => {
+          get().clearVisualization();
+          const { data, visualization } = get();
+          const { nodes: existingNodes, edges: existingEdges, nodeCounter: existingCounter, stackingOrder: existingOrder } = data;
+
+          if (existingNodes.length === 0) {
+            get().setGraph(incomingNodes, incomingEdges, incomingNodeCounter);
+            return;
+          }
+
+          if (incomingNodes.length === 0) return;
+
+          // 1. Calculate bounding box of existing nodes
+          let maxExistingX = -Infinity;
+          let minExistingY = Infinity;
+          let maxExistingY = -Infinity;
+          for (const n of existingNodes) {
+            if (n.x > maxExistingX) maxExistingX = n.x;
+            if (n.y < minExistingY) minExistingY = n.y;
+            if (n.y > maxExistingY) maxExistingY = n.y;
+          }
+
+          // 2. Calculate bounding box of incoming nodes
+          let minIncomingX = Infinity;
+          let minIncomingY = Infinity;
+          let maxIncomingY = -Infinity;
+          for (const n of incomingNodes) {
+            if (n.x < minIncomingX) minIncomingX = n.x;
+            if (n.y < minIncomingY) minIncomingY = n.y;
+            if (n.y > maxIncomingY) maxIncomingY = n.y;
+          }
+
+          // 3. Compute offset: position new graph to the right with comfortable gap (180px)
+          const gap = 180;
+          const offsetX = (maxExistingX + gap) - minIncomingX;
+          const existingCenterY = (minExistingY + maxExistingY) / 2;
+          const incomingCenterY = (minIncomingY + maxIncomingY) / 2;
+          const offsetY = existingCenterY - incomingCenterY;
+
+          // 4. Remap node IDs so they are completely unique and don't collide
+          const idMap = new Map<number, number>();
+          let nextId = existingCounter;
+
+          const positionedNewNodes: GraphNode[] = incomingNodes.map((n) => {
+            nextId++;
+            idMap.set(n.id, nextId);
+            return {
+              ...n,
+              id: nextId,
+              x: Math.round(n.x + offsetX),
+              y: Math.round(n.y + offsetY),
+            };
+          });
+
+          // 5. Build lookup map for positions of new nodes
+          const newPosMap = new Map<number, { x: number; y: number }>();
+          positionedNewNodes.forEach((n) => newPosMap.set(n.id, { x: n.x, y: n.y }));
+
+          // 6. Merge edges
+          const mergedEdges = new Map<number, GraphEdge[]>();
+          existingEdges.forEach((list, u) => {
+            mergedEdges.set(u, [...list]);
+          });
+          positionedNewNodes.forEach((n) => {
+            mergedEdges.set(n.id, []);
+          });
+
+          incomingEdges.forEach((list, oldU) => {
+            const newU = idMap.get(oldU);
+            if (newU === undefined) return;
+            const uPos = newPosMap.get(newU);
+            if (!uPos) return;
+
+            for (const e of list) {
+              const newTo = idMap.get(e.to);
+              if (newTo === undefined) continue;
+              const toPos = newPosMap.get(newTo);
+              if (!toPos) continue;
+
+              const { tempX, tempY } = calculateAccurateCoords(uPos.x, uPos.y, toPos.x, toPos.y);
+              const remappedEdge: GraphEdge = {
+                ...e,
+                from: newU,
+                to: newTo,
+                x1: uPos.x,
+                y1: uPos.y,
+                x2: tempX,
+                y2: tempY,
+                nodeX2: toPos.x,
+                nodeY2: toPos.y,
+              };
+              mergedEdges.get(newU)?.push(remappedEdge);
+            }
+          });
+
+          const mergedNodes = [...existingNodes, ...positionedNewNodes];
+          const newStackingOrder = new Set(existingOrder);
+          positionedNewNodes.forEach((n) => newStackingOrder.add(n.id));
+
+          // Auto-select the newly added graph vertices so user can drag or delete them immediately!
+          const newSelectedIds = new Set(positionedNewNodes.map((n) => n.id));
+
+          set({
+            data: {
+              nodes: mergedNodes,
+              edges: mergedEdges,
+              nodeCounter: nextId,
+              stackingOrder: newStackingOrder,
+            },
+            selection: {
+              nodeIds: newSelectedIds,
+              edge: null,
+              focusedEdge: null,
+            },
+            visualization: { ...visualization, input: null },
           });
         }),
 
@@ -701,6 +823,10 @@ export const useGraphStore = create<GraphStore>()(
         clearFocusedEdge: () => {
           const { selection } = get();
           set({ selection: { ...selection, focusedEdge: null } });
+        },
+
+        setSelectToolActive: (active: boolean) => {
+          set({ selectToolActive: active });
         },
 
         // ========================================

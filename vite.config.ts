@@ -21,6 +21,7 @@ export default defineConfig({
       analytics: { gaTrackingId: "G-WG1RN51DBH" },
       fonts: [{ href: "/fonts/outfit-latin.woff2", type: "font/woff2" }],
       favicons: [
+        { rel: "icon", href: "/favicon.svg", type: "image/svg+xml" },
         { rel: "icon", href: "/favicon.png", type: "image/png" },
         { rel: "apple-touch-icon", href: "/apple-touch-icon.png" },
       ],
@@ -38,6 +39,7 @@ export default defineConfig({
   server: {
     port: 3000,
     open: true,
+    host: true,
   },
   build: {
     outDir: "build",

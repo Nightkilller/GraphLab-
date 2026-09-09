@@ -40,8 +40,9 @@ export function useBoxSelection({
 
   const handleBoxSelectionPointerDown = useCallback(
     (event: React.PointerEvent<SVGSVGElement>): boolean => {
-      // Only activate box selection with Shift key held
-      if (!event.shiftKey) return false;
+      const isSelectToolActive = useGraphStore.getState().selectToolActive;
+      // Activate box selection with Shift key held OR when Marquee Select Tool is active
+      if (!event.shiftKey && !isSelectToolActive) return false;
 
       const target = event.target as SVGElement;
       // Only start box selection on empty canvas (svg element)

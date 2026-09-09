@@ -24,9 +24,11 @@ import { KeyboardShortcuts } from "./KeyboardShortcuts";
 import { ZoomControls } from "./ZoomControls";
 import { TracePanel } from "./TracePanel";
 import { TraceToggle } from "./TraceToggle";
+import { ComplementInspector } from "./ComplementInspector";
 import { AnimatePresence } from "motion/react";
 import * as m from "motion/react-m";
 import { Toolbar, ToolbarButton } from "../ui/toolbar";
+import { isMac } from "../../utils/keyboard";
 
 export const Board = () => {
   const visualizationAlgorithm = useGraphStore((state) => state.visualization.algorithm);
@@ -98,9 +100,10 @@ export const Board = () => {
         {/* Background color */}
         <div className="absolute inset-0 pointer-events-none bg-(--color-paper)" />
 
+
         {/* Toolbar - Bottom on mobile, Top on desktop */}
         {/* DOM order: Toolbar first for natural tab order (toolbar → graph → other controls) */}
-        <div className="fixed z-50 bottom-[max(0.75rem,env(safe-area-inset-bottom))] md:bottom-auto md:top-5 left-1/2 -translate-x-1/2 max-w-[calc(100vw-2rem)] flex flex-col gap-2">
+        <div className="fixed z-50 bottom-[max(0.75rem,env(safe-area-inset-bottom))] md:bottom-auto md:top-3.5 left-1/2 -translate-x-1/2 max-w-[calc(100vw-1.5rem)] flex flex-col gap-2 items-center">
           {!isDesktop && (
             <MobileControls
               onUndo={execute.undo}
@@ -141,6 +144,9 @@ export const Board = () => {
             </m.div>
           )}
         </AnimatePresence>
+
+        {/* Complement Inspector floating comparison toolbar */}
+        <ComplementInspector />
 
         {/* Trace Panel - Desktop only, bottom center, hidden during RESULT steps */}
         <AnimatePresence>
@@ -193,7 +199,7 @@ export const Board = () => {
                   </Button>
                 </ToolbarButton>
               </TooltipTrigger>
-              <TooltipContent>Undo</TooltipContent>
+              <TooltipContent>Undo ({isMac ? "⌘Z" : "Ctrl+Z"})</TooltipContent>
             </Tooltip>
 
             <Tooltip>
@@ -211,7 +217,7 @@ export const Board = () => {
                   </Button>
                 </ToolbarButton>
               </TooltipTrigger>
-              <TooltipContent>Redo</TooltipContent>
+              <TooltipContent>Redo ({isMac ? "⌘⇧Z" : "Ctrl+Y"})</TooltipContent>
             </Tooltip>
           </Toolbar>
         </div>
