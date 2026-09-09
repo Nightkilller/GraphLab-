@@ -28,6 +28,7 @@ import {
   setGroqApiKey,
   DEFAULT_GROQ_API_KEY,
   cleanMathFormatting,
+  detectProvider,
 } from "../../lib/groq";
 import { generateLocalGraphTheoryExplanation } from "../../utils/graph/localGraphTheoryExplainer";
 import {
@@ -718,7 +719,15 @@ export const AITutorPanel = ({ disabled }: AITutorPanelProps) => {
           <div className="flex items-center justify-between">
             <span className="flex items-center gap-1 text-(--color-text-muted)">
               <RefreshCw className="w-3 h-3 text-emerald-500" />
-              Engine: <strong className="text-(--color-accent)">{groqKeyInput.startsWith("sk-or-") ? "OpenRouter AI" : "Groq LPU"}</strong>
+              Engine: <strong className="text-(--color-accent)">
+                {detectProvider(groqKeyInput) === "openrouter"
+                  ? "OpenRouter AI"
+                  : detectProvider(groqKeyInput) === "openai"
+                  ? "OpenAI"
+                  : detectProvider(groqKeyInput) === "gemini"
+                  ? "Google Gemini"
+                  : "Groq LPU"}
+              </strong>
             </span>
             <button
               type="button"
@@ -734,13 +743,13 @@ export const AITutorPanel = ({ disabled }: AITutorPanelProps) => {
             <div className="mt-2 p-2.5 rounded-lg bg-(--color-paper) border border-(--color-divider) space-y-2">
               <div>
                 <label className="text-[10px] font-medium text-(--color-text) block mb-0.5">
-                  OpenRouter / Groq API Key
+                  Universal API Key (OpenRouter, Groq, OpenAI, or Gemini)
                 </label>
                 <input
                   type="password"
                   value={groqKeyInput}
                   onChange={(e) => setGroqKeyInput(e.target.value)}
-                  placeholder="sk-or-... or gsk_..."
+                  placeholder="Paste any API key (sk-or-..., gsk_..., sk-proj-..., or AIza...)"
                   className="w-full px-2 py-1 text-xs rounded bg-(--color-surface) border border-(--color-divider) text-(--color-text) font-mono"
                 />
               </div>

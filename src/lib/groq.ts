@@ -15,9 +15,22 @@ const FALLBACK_OPENROUTER_KEY =
     : "";
 
 export const DEFAULT_GROQ_API_KEY =
+  (import.meta.env?.VITE_AI_API_KEY as string | undefined)?.trim() ||
   (import.meta.env?.VITE_OPENROUTER_API_KEY as string | undefined)?.trim() ||
   (import.meta.env?.VITE_GROQ_API_KEY as string | undefined)?.trim() ||
   FALLBACK_OPENROUTER_KEY;
+
+export type AIProvider = "openrouter" | "groq" | "openai" | "gemini";
+
+export function detectProvider(key: string): AIProvider {
+  const trimmed = key.trim();
+  if (trimmed.startsWith("sk-or-")) return "openrouter";
+  if (trimmed.startsWith("gsk_")) return "groq";
+  if (trimmed.startsWith("sk-proj-")) return "openai";
+  if (trimmed.startsWith("AIza")) return "gemini";
+  if (trimmed.startsWith("sk-")) return "openrouter";
+  return "openrouter";
+}
 
 // Backward-compatible exports
 export const DEFAULT_AI_KEY = DEFAULT_GROQ_API_KEY;
@@ -206,27 +219,88 @@ export async function compressImageFile(file: File, maxDim = 800): Promise<strin
 }
 
 /**
- * Detect endpoint and headers based on API key format
+ * Detect endpoint, headers, and candidate models based on API key format
  */
-function getProviderConfig(apiKey: string): { isOpenRouter: boolean; url: string; headers: Record<string, string> } {
-  const isOpenRouter = apiKey.startsWith("sk-or-") || apiKey.startsWith("sk-");
-  const headers: Record<string, string> = {
-    Authorization: `Bearer ${apiKey}`,
-    "Content-Type": "application/json",
-  };
-  if (isOpenRouter) {
-    headers["HTTP-Referer"] = "https://graphlab.dev";
-    headers["X-Title"] = "GraphLab";
+function getProviderConfig(apiKey: string): {
+  provider: AIProvider;
+  url: string;
+  headers: Record<string, string>;
+  textModels: string[];
+  visionModels: string[];
+  defaultTemp: number;
+} {
+  const provider = detectProvider(apiKey);
+  switch (provider) {
+    case "groq":
+      return {
+        provider,
+        url: GROQ_API_URL,
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          "Content-Type": "application/json",
+        },
+        textModels: [
+          "qwen/qwen3.8-27b",
+          "groq/compound-mini",
+          "qwen/qwen3.6-27b",
+          "openai/gpt-oss-120b",
+        ],
+        visionModels: ["qwen/qwen3.8-27b", "qwen/qwen3.6-27b"],
+        defaultTemp: 0.1,
+      };
+
+    case "openai":
+      return {
+        provider,
+        url: "https://api.openai.com/v1/chat/completions",
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          "Content-Type": "application/json",
+        },
+        textModels: ["gpt-4o-mini", "gpt-4o", "chatgpt-4o-latest"],
+        visionModels: ["gpt-4o-mini", "gpt-4o"],
+        defaultTemp: 0.2,
+      };
+
+    case "gemini":
+      return {
+        provider,
+        url: "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          "Content-Type": "application/json",
+        },
+        textModels: ["gemini-2.0-flash", "gemini-1.5-flash"],
+        visionModels: ["gemini-2.0-flash", "gemini-1.5-flash"],
+        defaultTemp: 0.2,
+      };
+
+    case "openrouter":
+    default:
+      return {
+        provider: "openrouter",
+        url: OPENROUTER_API_URL,
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          "Content-Type": "application/json",
+          "HTTP-Referer": "https://graphlab.dev",
+          "X-Title": "GraphLab",
+        },
+        textModels: [
+          "openrouter/free",
+          "meta-llama/llama-3.3-70b-instruct:free",
+          "google/gemma-4-31b-it:free",
+          "liquid/lfm-2.5-2.6b:free",
+          "inclusionai/ling-3.0-flash-sante:free",
+        ],
+        visionModels: ["openrouter/free"],
+        defaultTemp: 0.3,
+      };
   }
-  return {
-    isOpenRouter,
-    url: isOpenRouter ? OPENROUTER_API_URL : GROQ_API_URL,
-    headers,
-  };
 }
 
 /**
- * Call the AI API (OpenRouter or Groq) with a specific model
+ * Call the AI API (OpenRouter, Groq, OpenAI, or Gemini) with a specific model
  */
 async function executeGroqCall(
   apiKey: string,
@@ -237,24 +311,19 @@ async function executeGroqCall(
 ): Promise<string> {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(new Error("Request timeout")), timeoutMs);
-  const { isOpenRouter, url, headers } = getProviderConfig(apiKey);
+  const config = getProviderConfig(apiKey);
 
   const payload: any = {
     model,
     messages,
     max_tokens: maxTokens,
+    temperature: config.defaultTemp,
   };
 
-  if (!isOpenRouter) {
-    payload.temperature = 0.1;
-  } else {
-    payload.temperature = 0.3;
-  }
-
   try {
-    const response = await fetch(url, {
+    const response = await fetch(config.url, {
       method: "POST",
-      headers,
+      headers: config.headers,
       signal: controller.signal,
       body: JSON.stringify(payload),
     });
@@ -286,33 +355,20 @@ async function executeGroqCall(
 export async function callAIAPI(messages: ChatMessage[], maxTokens = 900): Promise<string> {
   const apiKey = getGroqApiKey();
   if (!apiKey) {
-    throw new Error("No API key configured. Please provide an OpenRouter or Groq API key.");
+    throw new Error("No API key configured. Please paste your API key in settings.");
   }
   const isVision = messages.some(
     (m) => Array.isArray(m.content) && m.content.some((c) => c.type === "image_url")
   );
 
-  const isOpenRouter = apiKey.startsWith("sk-or-") || apiKey.startsWith("sk-");
-  let models: string[];
-  if (isOpenRouter) {
-    models = isVision
-      ? ["openrouter/free"]
-      : [
-          "openrouter/free",
-          "meta-llama/llama-3.3-70b-instruct:free",
-          "google/gemma-4-31b-it:free",
-          "inclusionai/ling-3.0-flash-sante:free",
-          "liquid/lfm-2.5-2.6b:free",
-        ];
-  } else {
-    models = isVision ? GROQ_VISION_MODELS : GROQ_TEXT_MODELS;
-  }
+  const config = getProviderConfig(apiKey);
+  const models = isVision ? config.visionModels : config.textModels;
 
   for (const model of models) {
     try {
       return await executeGroqCall(apiKey, model, messages, maxTokens, 35000);
     } catch (err: any) {
-      console.warn(`[AI] ${model} failed:`, err?.message || err);
+      console.warn(`[AI - ${config.provider}] ${model} failed:`, err?.message || err);
     }
   }
 
