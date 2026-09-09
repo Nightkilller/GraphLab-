@@ -179,7 +179,7 @@ export const SubgraphModal = ({ disabled }: SubgraphModalProps) => {
             size="sm"
           >
             <GitFork className="w-4 h-4 shrink-0 text-(--color-accent)" />
-            <span className="hidden md:inline">Subgraph</span>
+            <span className="hidden lg:inline">Subgraph</span>
           </Button>
         </ToolbarButton>
       </PopoverTrigger>
@@ -187,7 +187,7 @@ export const SubgraphModal = ({ disabled }: SubgraphModalProps) => {
       <PopoverContent
         align="start"
         sideOffset={8}
-        className="w-[500px] max-h-[85vh] overflow-y-auto p-4 bg-(--color-surface) border border-(--color-border) rounded-xl shadow-2xl relative"
+        className="w-[min(500px,calc(100vw-1.5rem))] max-h-[min(600px,85vh)] overflow-y-auto p-4 bg-(--color-surface) border border-(--color-border) rounded-xl shadow-2xl relative"
         onPaste={handlePaste}
       >
         <GrainTexture baseFrequency={3} className="rounded-xl opacity-20 pointer-events-none" />

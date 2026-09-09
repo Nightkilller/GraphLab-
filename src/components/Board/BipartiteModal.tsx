@@ -108,7 +108,7 @@ export const BipartiteModal = ({ disabled }: BipartiteModalProps) => {
             size="sm"
           >
             <Split className="w-4 h-4 shrink-0 text-(--color-accent)" />
-            <span className="hidden md:inline">Bipartite</span>
+            <span className="hidden lg:inline">Bipartite</span>
           </Button>
         </ToolbarButton>
       </PopoverTrigger>
@@ -116,7 +116,7 @@ export const BipartiteModal = ({ disabled }: BipartiteModalProps) => {
       <PopoverContent
         align="start"
         sideOffset={8}
-        className="w-[490px] max-h-[85vh] overflow-y-auto p-4 bg-(--color-surface) border border-(--color-border) rounded-xl shadow-2xl relative"
+        className="w-[min(490px,calc(100vw-1.5rem))] max-h-[min(600px,85vh)] overflow-y-auto p-4 bg-(--color-surface) border border-(--color-border) rounded-xl shadow-2xl relative"
       >
         <GrainTexture baseFrequency={3} className="rounded-xl opacity-20 pointer-events-none" />
 

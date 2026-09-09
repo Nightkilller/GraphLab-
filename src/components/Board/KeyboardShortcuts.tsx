@@ -83,7 +83,7 @@ export const KeyboardShortcuts = () => {
         side="top"
         align="end"
         sideOffset={8}
-        className="w-76 p-0 bg-(--color-surface) border border-(--color-divider) rounded-xl shadow-2xl overflow-hidden"
+        className="w-76 max-w-[calc(100vw-1.5rem)] p-0 bg-(--color-surface) border border-(--color-divider) rounded-xl shadow-2xl overflow-hidden"
       >
         <GrainTexture baseFrequency={4.2} className="rounded-xl" />
         <div className="relative p-3.5 space-y-3">

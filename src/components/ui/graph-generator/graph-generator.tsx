@@ -33,12 +33,12 @@ export const GraphGenerator = ({ disabled }: GraphGeneratorProps) => {
             size='sm'
           >
             <Sparkles className="w-4 h-4 shrink-0" />
-            <span className="hidden md:inline">Generate</span>
+            <span className="hidden lg:inline">Generate</span>
           </Button>
         </ToolbarButton>
       </PopoverTrigger>
       <PopoverContent
-        className="w-[340px] max-h-[520px] overflow-y-auto p-0"
+        className="w-[min(340px,calc(100vw-1.5rem))] max-h-[520px] overflow-y-auto p-0"
         align="center"
         sideOffset={12}
       >

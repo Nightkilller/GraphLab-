@@ -108,7 +108,7 @@ export const AlgorithmPicker = ({
         </ToolbarButton>
       </PopoverTrigger>
       <PopoverContent
-        className="w-[320px] p-3"
+        className="w-[min(320px,calc(100vw-1.5rem))] p-3"
         align="center"
         sideOffset={12}
       >

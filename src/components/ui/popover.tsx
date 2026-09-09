@@ -20,7 +20,7 @@ function PopoverContent({ className, align = "center", sideOffset = 4, ref, ...p
         align={align}
         sideOffset={sideOffset}
         className={cn(
-          "z-50 overflow-hidden rounded-lg bg-(--color-surface) shadow-(--shadow-premium) outline-none",
+          "z-50 overflow-hidden rounded-lg bg-(--color-surface) shadow-(--shadow-premium) outline-none max-w-[calc(100vw-1rem)] max-h-[calc(100dvh-2rem)]",
           "data-[state=open]:animate-in data-[state=closed]:animate-out",
           "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
           "data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95",

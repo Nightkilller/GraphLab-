@@ -20,7 +20,7 @@ export function MobileControls({ onUndo, onRedo, onDeleteSelectedNodes, onZoomIn
   const canDeleteSelectedNodes = useGraphStore(selectCanDeleteSelectedNodes);
 
   return (
-    <div className="flex justify-between">
+    <div className="flex justify-between items-center w-full max-w-[calc(100vw-1.5rem)] px-0.5">
       <div className="z-40 gap-2">
         <Toolbar aria-label="Zoom controls" className="relative flex items-center gap-2 p-2 rounded-md backdrop-blur-sm">
           <ZoomControls onZoomIn={onZoomIn} onZoomOut={onZoomOut} onZoomReset={onZoomReset} />

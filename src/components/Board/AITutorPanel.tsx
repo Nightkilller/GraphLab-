@@ -229,13 +229,13 @@ export const AITutorPanel = ({ disabled }: AITutorPanelProps) => {
             size="sm"
           >
             <GraduationCap className="w-4 h-4 shrink-0 text-(--color-accent)" />
-            <span className="hidden md:inline">AI Tutor</span>
+            <span className="hidden lg:inline">AI Tutor</span>
           </Button>
         </ToolbarButton>
       </PopoverTrigger>
 
       <PopoverContent
-        className="w-[440px] max-h-[600px] p-4 bg-(--color-surface) border border-(--color-divider) rounded-2xl shadow-2xl relative overflow-hidden flex flex-col"
+        className="w-[min(440px,calc(100vw-1.5rem))] max-h-[min(600px,calc(100dvh-4rem))] p-4 bg-(--color-surface) border border-(--color-divider) rounded-2xl shadow-2xl relative overflow-hidden flex flex-col"
         align="center"
         sideOffset={12}
       >

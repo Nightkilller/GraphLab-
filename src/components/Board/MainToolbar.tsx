@@ -115,7 +115,7 @@ export function MainToolbar({ graphRendererRef }: MainToolbarProps) {
   return (
     <Toolbar
       aria-label="Graph controls"
-      className="flex items-center relative p-1 rounded-xl bg-(--color-surface) shadow-(--shadow-premium) gap-1 whitespace-nowrap max-w-full overflow-x-auto no-scrollbar"
+      className="flex items-center relative p-1 rounded-xl bg-(--color-surface) shadow-(--shadow-premium) gap-1 whitespace-nowrap max-w-full overflow-x-auto no-scrollbar touch-pan-x"
     >
       <GrainTexture baseFrequency={3} className="rounded-xl" />
 

@@ -122,13 +122,13 @@ export const ImageToGraphModal = ({ disabled }: ImageToGraphModalProps) => {
             size="sm"
           >
             <ImageIcon className="w-4 h-4 shrink-0 text-(--color-accent)" />
-            <span className="hidden md:inline">Photo</span>
+            <span className="hidden lg:inline">Photo</span>
           </Button>
         </ToolbarButton>
       </PopoverTrigger>
 
       <PopoverContent
-        className="w-[360px] p-4 bg-(--color-surface) border border-(--color-divider) rounded-xl shadow-xl relative overflow-hidden"
+        className="w-[min(360px,calc(100vw-1.5rem))] p-4 bg-(--color-surface) border border-(--color-divider) rounded-xl shadow-xl relative overflow-hidden"
         align="center"
         sideOffset={12}
         onPaste={handlePaste}

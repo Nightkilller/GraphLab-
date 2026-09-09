@@ -103,13 +103,13 @@ export const DegreeSequenceModal = ({ disabled }: DegreeSequenceModalProps) => {
             size="sm"
           >
             <Hash className="w-4 h-4 shrink-0 text-(--color-accent)" />
-            <span className="hidden md:inline">Degree</span>
+            <span className="hidden lg:inline">Degree</span>
           </Button>
         </ToolbarButton>
       </PopoverTrigger>
 
       <PopoverContent
-        className="w-[430px] max-h-[580px] p-4 bg-(--color-surface) border border-(--color-divider) rounded-2xl shadow-2xl relative overflow-hidden flex flex-col"
+        className="w-[min(430px,calc(100vw-1.5rem))] max-h-[min(580px,calc(100dvh-4rem))] p-4 bg-(--color-surface) border border-(--color-divider) rounded-2xl shadow-2xl relative overflow-hidden flex flex-col"
         align="center"
         sideOffset={12}
       >
