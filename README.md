@@ -1,11 +1,15 @@
 # GraphLab 🧪
 
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-graph--lab--one.vercel.app-00dfa2?style=for-the-badge&logo=vercel&logoColor=white)](https://graph-lab-one.vercel.app/)
+
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-blue.svg)](https://www.typescriptlang.org/)
 [![React](https://img.shields.io/badge/React-19-61dafb.svg)](https://react.dev/)
 [![Vite](https://img.shields.io/badge/Vite-6-646cff.svg)](https://vitejs.dev/)
 
 An advanced, interactive graph theory laboratory and visualizer. Draw graphs, test theorems and invariants, run classic and structural algorithms step-by-step, verify graph isomorphism, evaluate Havel-Hakimi degree sequences, explore complement graphs and bipartite colorings, and consult the AI Graph Tutor.
+
+🔗 **Live Deployment**: **[https://graph-lab-one.vercel.app/](https://graph-lab-one.vercel.app/)**
 
 ---
 
@@ -105,11 +109,18 @@ pnpm build
 
 ---
 
-## 🌐 Hosting Live
+## 🌐 Live Demo & Deployment
 
-You can easily deploy GraphLab to popular static hosting platforms in minutes:
+GraphLab is deployed live and publicly accessible at:
+👉 **[https://graph-lab-one.vercel.app/](https://graph-lab-one.vercel.app/)**
 
-### Option 1: Vercel (Recommended ⚡)
+---
+
+### Deploying Your Own Instance
+
+You can deploy GraphLab to popular static hosting platforms in minutes:
+
+#### Option 1: Vercel (Recommended ⚡)
 1. Push your code to GitHub (`https://github.com/Nightkilller/GraphLab-`).
 2. Go to [vercel.com](https://vercel.com) and sign in with your GitHub account.
 3. Click **"Add New..."** → **"Project"** and select `GraphLab-`.
@@ -118,9 +129,9 @@ You can easily deploy GraphLab to popular static hosting platforms in minutes:
    - **Build Command**: `pnpm build` (or `npm run build`)
    - **Output Directory**: `build` *(Important: GraphLab outputs to `build`, not `dist`)*
    - **Install Command**: `pnpm install` (or `npm install`)
-5. *(Optional)* Under **Environment Variables**, add:
-   - `VITE_GROQ_API_KEY`: Your Groq API key for the AI Graph Tutor (optional, local explainer works offline without it).
-6. Click **Deploy**. Vercel will build and assign you a live HTTPS domain (e.g. `graphlab.vercel.app`).
+5. Under **Environment Variables**, add:
+   - `VITE_AI_API_KEY`: Your OpenRouter / Groq API key for the AI Graph Tutor (optional, local engine works offline without it).
+6. Click **Deploy**. Vercel will build and assign you a live HTTPS domain.
 
 ---
 
