@@ -230,13 +230,13 @@ export const ImageToGraphModal = ({ disabled }: ImageToGraphModalProps) => {
             <div className="mt-2.5 p-2.5 rounded-lg bg-(--color-paper) border border-(--color-divider) space-y-2 animate-in fade-in-50 duration-150">
               <div>
                 <label className="text-[10px] font-medium text-(--color-text) block mb-0.5">
-                  Groq API Key
+                  OpenRouter / Groq API Key
                 </label>
                 <input
                   type="password"
                   value={apiKeyInput}
                   onChange={(e) => setApiKeyInput(e.target.value)}
-                  placeholder="gsk_..."
+                  placeholder="sk-or-... or gsk_..."
                   className="w-full px-2 py-1 text-xs rounded bg-(--color-surface) border border-(--color-divider) text-(--color-text) font-mono"
                 />
               </div>
