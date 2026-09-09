@@ -6,6 +6,8 @@ import { applyViewportTransform, resetTransform } from "../components/GraphCanva
 import { drawGrid } from "../components/GraphCanvas/renderers/gridRenderer";
 import { drawNode, drawConnectors, drawNodeDegreeBadge } from "../components/GraphCanvas/renderers/nodeRenderer";
 import { drawEdge, drawPreviewEdge, drawSelectionBox } from "../components/GraphCanvas/renderers/edgeRenderer";
+import { drawTextBox } from "../components/GraphCanvas/renderers/textBoxRenderer";
+import { useGraphStore, selectTextBoxes, selectSelectedTextBoxId } from "../store/graphStore";
 
 interface UseCanvasRenderLoopProps {
   canvasRef: RefObject<HTMLCanvasElement | null>;
@@ -69,6 +71,9 @@ export function useCanvasRenderLoop({
   isVisualizing,
   theme,
 }: UseCanvasRenderLoopProps): void {
+  const textBoxes = useGraphStore(selectTextBoxes);
+  const selectedTextBoxId = useGraphStore(selectSelectedTextBoxId);
+
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -174,6 +179,11 @@ export function useCanvasRenderLoop({
       );
     }
 
+    // Draw canvas text boxes
+    for (const box of textBoxes) {
+      drawTextBox(ctx, box, box.id === selectedTextBoxId);
+    }
+
     resetTransform(ctx);
   }, [
     canvasSize,
@@ -197,5 +207,7 @@ export function useCanvasRenderLoop({
     isVisualizing,
     theme,
     canvasRef,
+    textBoxes,
+    selectedTextBoxId,
   ]);
 }

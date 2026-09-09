@@ -1,5 +1,5 @@
 import { createHistoryStore, withAutoHistory, withBatchedAutoHistory } from "./historyStore";
-import { GraphSnapshot, GraphNode, GraphEdge } from "../components/Graph/types";
+import { GraphSnapshot, GraphNode, GraphEdge, CanvasTextBox } from "../components/Graph/types";
 import { GraphData } from "./graphStore";
 import { STORE_NAME } from "../constants/store";
 
@@ -24,12 +24,14 @@ export const createGraphSnapshot = (
   nodes: GraphNode[],
   edges: Map<number, GraphEdge[]>,
   nodeCounter: number,
-  stackingOrder: Set<number>
+  stackingOrder: Set<number>,
+  textBoxes?: CanvasTextBox[]
 ): GraphSnapshot => ({
   nodes,
   edges: Array.from(edges.entries()).map(([k, v]) => [k, v || []]),
   nodeCounter,
   stackingOrder: [...stackingOrder],  // Convert Set to array for serialization
+  textBoxes: textBoxes ? [...textBoxes] : [],
 });
 
 // ============================================================================
@@ -49,8 +51,8 @@ export function withGraphAutoHistory<TArgs extends unknown[], TReturn>(
   return withAutoHistory(
     useGraphHistoryStore,
     () => {
-      const { nodes, edges, nodeCounter, stackingOrder } = getState().data;
-      return createGraphSnapshot(nodes, edges, nodeCounter, stackingOrder);
+      const { nodes, edges, nodeCounter, stackingOrder, textBoxes } = getState().data;
+      return createGraphSnapshot(nodes, edges, nodeCounter, stackingOrder, textBoxes);
     },
     mutation
   );
@@ -68,8 +70,8 @@ export function withGraphBatchedAutoHistory<TArgs extends unknown[], TReturn>(
   return withBatchedAutoHistory(
     useGraphHistoryStore,
     () => {
-      const { nodes, edges, nodeCounter, stackingOrder } = getState().data;
-      return createGraphSnapshot(nodes, edges, nodeCounter, stackingOrder);
+      const { nodes, edges, nodeCounter, stackingOrder, textBoxes } = getState().data;
+      return createGraphSnapshot(nodes, edges, nodeCounter, stackingOrder, textBoxes);
     },
     mutation,
     debounceMs

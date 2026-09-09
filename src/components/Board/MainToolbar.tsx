@@ -6,7 +6,7 @@ import { AlgorithmPicker } from "../ui/algorithm-picker";
 import { GraphGenerator } from "../ui/graph-generator";
 import { Button } from "../ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
-import { RotateCcw, Download, FileCode, Image, Box, Feather, Zap, BoxSelect } from "lucide-react";
+import { RotateCcw, Download, FileCode, Image, Box, Feather, Zap, BoxSelect, Type } from "lucide-react";
 import { useGraphStore } from "../../store/graphStore";
 import { useSettingsStore } from "../../store/settingsStore";
 import { SPEED_LEVELS, VisualizationState } from "../../constants/visualization";
@@ -57,6 +57,8 @@ export function MainToolbar({ graphRendererRef }: MainToolbarProps) {
   const setVisualizationMode = useGraphStore((state) => state.setVisualizationMode);
   const selectToolActive = useGraphStore((state) => state.selectToolActive);
   const setSelectToolActive = useGraphStore((state) => state.setSelectToolActive);
+  const textToolActive = useGraphStore((state) => state.textToolActive);
+  const setTextToolActive = useGraphStore((state) => state.setTextToolActive);
 
   const renderMode = useSettingsStore((state) => state.renderMode);
   const setRenderMode = useSettingsStore((state) => state.setRenderMode);
@@ -155,6 +157,38 @@ export function MainToolbar({ graphRendererRef }: MainToolbarProps) {
           {selectToolActive
             ? "Marquee Select (Active — Drag on canvas to select)"
             : "Marquee Select Tool (Hold & drag on canvas to select)"}
+        </TooltipContent>
+      </Tooltip>
+
+      {/* Canvas Text Tool */}
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <ToolbarButton asChild>
+            <Button
+              variant={textToolActive ? "secondary" : "ghost"}
+              size="icon-sm"
+              disabled={isVisualizing}
+              onClick={() => {
+                const next = !textToolActive;
+                setTextToolActive(next);
+                if (next) {
+                  toast.info("Text Tool active (T): Click anywhere on canvas to write text");
+                }
+              }}
+              aria-label="Text Tool (T)"
+              className={cn(
+                "z-10 transition-colors shrink-0",
+                textToolActive && "bg-(--color-accent)/20 text-(--color-accent) border border-(--color-accent)/40 shadow-xs"
+              )}
+            >
+              <Type size={16} />
+            </Button>
+          </ToolbarButton>
+        </TooltipTrigger>
+        <TooltipContent>
+          {textToolActive
+            ? "Text Tool (Active — Click canvas to add text)"
+            : "Text Tool (T) — Click canvas to write text"}
         </TooltipContent>
       </Tooltip>
 

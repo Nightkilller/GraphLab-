@@ -325,3 +325,149 @@ export function checkIsomorphism(
     invariants,
   };
 }
+
+export interface CanvasGraphComponent {
+  id: number;
+  label: string;
+  nodes: GraphNode[];
+  edges: Map<number, GraphEdge[]>;
+  center: { x: number; y: number };
+}
+
+/**
+ * Extract connected components from active canvas nodes and edges.
+ * Treats edges as undirected connectivity for component partitioning.
+ * Sorted left-to-right (by x-coordinate) for intuitive G1 (left) vs G2 (right) comparison.
+ */
+export function extractConnectedComponents(
+  nodes: GraphNode[],
+  edges: Map<number, GraphEdge[]>
+): CanvasGraphComponent[] {
+  if (nodes.length === 0) return [];
+
+  const nodeMap = new Map<number, GraphNode>();
+  nodes.forEach((n) => nodeMap.set(n.id, n));
+
+  // Build undirected adjacency set
+  const adj = new Map<number, Set<number>>();
+  nodes.forEach((n) => adj.set(n.id, new Set<number>()));
+
+  edges.forEach((list, u) => {
+    if (!adj.has(u)) adj.set(u, new Set<number>());
+    for (const e of list) {
+      if (nodeMap.has(e.to)) {
+        adj.get(u)!.add(e.to);
+        if (!adj.has(e.to)) adj.set(e.to, new Set<number>());
+        adj.get(e.to)!.add(u);
+      }
+    }
+  });
+
+  const visited = new Set<number>();
+  const rawComponents: GraphNode[][] = [];
+
+  for (const node of nodes) {
+    if (visited.has(node.id)) continue;
+
+    const compNodes: GraphNode[] = [];
+    const queue = [node.id];
+    visited.add(node.id);
+
+    while (queue.length > 0) {
+      const currId = queue.shift()!;
+      const currNode = nodeMap.get(currId);
+      if (currNode) compNodes.push(currNode);
+
+      const neighbors = adj.get(currId);
+      if (neighbors) {
+        for (const neighborId of neighbors) {
+          if (!visited.has(neighborId)) {
+            visited.add(neighborId);
+            queue.push(neighborId);
+          }
+        }
+      }
+    }
+
+    rawComponents.push(compNodes);
+  }
+
+  // Calculate bounding center and sort components left-to-right (minX or averageX)
+  const componentsWithCenters = rawComponents.map((cNodes) => {
+    const sumX = cNodes.reduce((acc, n) => acc + n.x, 0);
+    const sumY = cNodes.reduce((acc, n) => acc + n.y, 0);
+    const minX = Math.min(...cNodes.map((n) => n.x));
+    return {
+      nodes: cNodes,
+      minX,
+      center: {
+        x: Math.round(sumX / cNodes.length),
+        y: Math.round(sumY / cNodes.length),
+      },
+    };
+  });
+
+  // Sort by minX
+  componentsWithCenters.sort((a, b) => a.minX - b.minX);
+
+  return componentsWithCenters.map((comp, idx) => {
+    const compId = idx + 1;
+    const nodeIdSet = new Set(comp.nodes.map((n) => n.id));
+
+    // Extract edges belonging purely to this component
+    const compEdges = new Map<number, GraphEdge[]>();
+    comp.nodes.forEach((n) => compEdges.set(n.id, []));
+
+    edges.forEach((list, u) => {
+      if (nodeIdSet.has(u)) {
+        const filtered = list.filter((e) => nodeIdSet.has(e.to));
+        compEdges.set(u, filtered);
+      }
+    });
+
+    const labelsPreview = comp.nodes
+      .slice(0, 3)
+      .map((n) => n.label || String(n.id))
+      .join(", ");
+    const suffix = comp.nodes.length > 3 ? "…" : "";
+
+    return {
+      id: compId,
+      label: `Graph G${compId} (${comp.nodes.length}V, ${labelsPreview}${suffix})`,
+      nodes: comp.nodes,
+      edges: compEdges,
+      center: comp.center,
+    };
+  });
+}
+
+/**
+ * Format isomorphism verdict as a canvas annotation text string.
+ */
+export function formatIsomorphismAnnotation(
+  result: IsomorphismCheckResult,
+  g1Name = "G1",
+  g2Name = "G2"
+): string {
+  if (result.isIsomorphic) {
+    const mappingStr = result.mappingDisplay && result.mappingDisplay.length > 0
+      ? `Bijection: ${result.mappingDisplay.map((m) => `${m.fromLabel}➔${m.toLabel}`).join(", ")}`
+      : "";
+
+    return [
+      `✓ ${g1Name} ≅ ${g2Name} (Isomorphic)`,
+      `|V| = ${result.invariants.v1}, |E| = ${result.invariants.e1}`,
+      `Degree Sequence: [${result.invariants.degreeSeq1.join(", ")}]`,
+      mappingStr,
+    ]
+      .filter(Boolean)
+      .join("\n");
+  }
+
+  return [
+    `✗ ${g1Name} ≇ ${g2Name} (Not Isomorphic)`,
+    result.reason,
+    `G1: |V|=${result.invariants.v1}, |E|=${result.invariants.e1} vs G2: |V|=${result.invariants.v2}, |E|=${result.invariants.e2}`,
+  ].join("\n");
+}
+

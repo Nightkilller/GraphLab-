@@ -29,6 +29,7 @@ const SHORTCUTS: Record<string, ShortcutConfig> = {
   jumpToStart:         { key: "Home",                                                    preventDefault: true },
   jumpToEnd:           { key: "End",                                                     preventDefault: true },
   togglePlay:          { key: " ",                                                       preventDefault: true },
+  toggleTextTool:      { key: "t",                       modKey: false,                  preventDefault: true },
 };
 
 // ---------------------------------------------------------------------------
@@ -138,6 +139,12 @@ export function useGraphActions() {
     s.resetVisualization();
   }, []);
 
+  const toggleTextTool = useCallback(() => {
+    const s = useGraphStore.getState();
+    if (s.visualization.state === VisualizationState.RUNNING) return;
+    s.setTextToolActive(!s.textToolActive);
+  }, []);
+
   // -------------------------------------------------------------------------
   // Keyboard handler — stable with [] deps because all execute fns are stable
   // -------------------------------------------------------------------------
@@ -180,6 +187,7 @@ export function useGraphActions() {
       { fn: jumpToStart,         shortcut: SHORTCUTS.jumpToStart,    stepModeOnly: true },
       { fn: jumpToEnd,           shortcut: SHORTCUTS.jumpToEnd,      stepModeOnly: true },
       { fn: togglePlay,          shortcut: SHORTCUTS.togglePlay,     stepModeOnly: true },
+      { fn: toggleTextTool,      shortcut: SHORTCUTS.toggleTextTool },
     ];
 
     for (const { fn, shortcut, stepModeOnly, isRedo } of entries) {
@@ -206,7 +214,7 @@ export function useGraphActions() {
       fn();
       return;
     }
-  }, [undo, redo, deleteSelectedNodes, selectAll, zoomIn, zoomOut, resetZoom, stepForward, stepBackward, jumpToStart, jumpToEnd, togglePlay, stopVisualization, clearAlgorithm, deselect]);
+  }, [undo, redo, deleteSelectedNodes, selectAll, zoomIn, zoomOut, resetZoom, stepForward, stepBackward, jumpToStart, jumpToEnd, togglePlay, toggleTextTool, stopVisualization, clearAlgorithm, deselect]);
 
   return {
     undo,
@@ -223,6 +231,7 @@ export function useGraphActions() {
     jumpToStart,
     jumpToEnd,
     togglePlay,
+    toggleTextTool,
     stopVisualization,
     handleKeyDown,
   };

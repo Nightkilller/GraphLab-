@@ -31,6 +31,7 @@ const getShortcutGroups = (platform: "windows" | "mac"): ShortcutGroup[] => {
         { keys: [mod, "+ / −"], description: "Zoom in / out" },
         { keys: [mod, "0"], description: "Reset zoom to 100%" },
         { keys: [isWin ? "Shift" : "⇧", "Drag"], description: "Multi-select box" },
+        { keys: ["T"], description: "Text tool (add text box on canvas)" },
       ],
     },
     {

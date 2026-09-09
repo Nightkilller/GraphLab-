@@ -16,6 +16,7 @@ beforeEach(() => {
       edges: new Map(),
       nodeCounter: 0,
       stackingOrder: new Set(),
+      textBoxes: [],
     },
     visualization: {
       algorithm: { key: 'select', text: 'Select Algorithm' },
@@ -33,8 +34,11 @@ beforeEach(() => {
       nodeIds: new Set<number>(),
       edge: null,
       focusedEdge: null,
+      textBoxId: null,
     },
     viewport: { zoom: 1, pan: { x: 0, y: 0 } },
+    selectToolActive: false,
+    textToolActive: false,
   })
 })
 
@@ -683,6 +687,48 @@ describe('graphStore', () => {
       expect(data.stackingOrder.size).toBe(3)
     })
   })
+
+  describe('Canvas Text Box Actions', () => {
+    it('adds, updates, moves, and deletes text boxes with undo/redo support', () => {
+      const { addTextBox, updateTextBox, moveTextBox, deleteTextBox, undo, redo, setTextToolActive } = useGraphStore.getState()
+
+      // Toggle text tool
+      expect(useGraphStore.getState().textToolActive).toBe(false)
+      setTextToolActive(true)
+      expect(useGraphStore.getState().textToolActive).toBe(true)
+
+      // Add text box
+      const id = addTextBox({ x: 100, y: 200, text: 'Hello Graph' })
+      expect(useGraphStore.getState().data.textBoxes).toHaveLength(1)
+      expect(useGraphStore.getState().data.textBoxes[0].text).toBe('Hello Graph')
+      expect(useGraphStore.getState().data.textBoxes[0].x).toBe(100)
+      expect(useGraphStore.getState().data.textBoxes[0].y).toBe(200)
+      expect(useGraphStore.getState().selection.textBoxId).toBe(id)
+
+      // Update text box
+      updateTextBox(id, { text: 'Updated Text', fontSize: 20, color: '#10b981' })
+      expect(useGraphStore.getState().data.textBoxes[0].text).toBe('Updated Text')
+      expect(useGraphStore.getState().data.textBoxes[0].fontSize).toBe(20)
+
+      // Move text box
+      moveTextBox(id, 250, 350)
+      expect(useGraphStore.getState().data.textBoxes[0].x).toBe(250)
+      expect(useGraphStore.getState().data.textBoxes[0].y).toBe(350)
+
+      // Delete text box
+      deleteTextBox(id)
+      expect(useGraphStore.getState().data.textBoxes).toHaveLength(0)
+
+      // Undo deletion
+      undo()
+      expect(useGraphStore.getState().data.textBoxes).toHaveLength(1)
+
+      // Redo deletion
+      redo()
+      expect(useGraphStore.getState().data.textBoxes).toHaveLength(0)
+    })
+  })
 })
+
 
 

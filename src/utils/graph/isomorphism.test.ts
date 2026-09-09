@@ -2,6 +2,8 @@ import { describe, it, expect } from "vitest";
 import {
   generateIsomorphicGraph,
   checkIsomorphism,
+  extractConnectedComponents,
+  formatIsomorphismAnnotation,
 } from "./isomorphism";
 import { GraphNode, GraphEdge } from "../../components/Graph/types";
 import { EDGE_TYPE } from "../../constants/graph";
@@ -93,4 +95,40 @@ describe("Graph Isomorphism Suite", () => {
     expect(check.isIsomorphic).toBe(false);
     expect(check.reason).toContain("no structure-preserving bijection exists");
   });
+
+  it("extracts connected components from multi-graph canvas", () => {
+    // Component 1: Nodes 0, 1 on the left (x = -200)
+    // Component 2: Nodes 10, 11 on the right (x = 200)
+    const nodes: GraphNode[] = [
+      { id: 0, x: -200, y: 0, r: 20, label: "A" },
+      { id: 1, x: -100, y: 0, r: 20, label: "B" },
+      { id: 10, x: 200, y: 0, r: 20, label: "X" },
+      { id: 11, x: 300, y: 0, r: 20, label: "Y" },
+    ];
+    const edges = new Map<number, GraphEdge[]>();
+    nodes.forEach((n) => edges.set(n.id, []));
+
+    edges.get(0)?.push({ x1: -200, y1: 0, x2: -100, y2: 0, nodeX2: -100, nodeY2: 0, from: 0, to: 1, weight: 1, type: EDGE_TYPE.UNDIRECTED });
+    edges.get(1)?.push({ x1: -100, y1: 0, x2: -200, y2: 0, nodeX2: -200, nodeY2: 0, from: 1, to: 0, weight: 1, type: EDGE_TYPE.UNDIRECTED });
+
+    edges.get(10)?.push({ x1: 200, y1: 0, x2: 300, y2: 0, nodeX2: 300, nodeY2: 0, from: 10, to: 11, weight: 1, type: EDGE_TYPE.UNDIRECTED });
+    edges.get(11)?.push({ x1: 300, y1: 0, x2: 200, y2: 0, nodeX2: 200, nodeY2: 0, from: 11, to: 10, weight: 1, type: EDGE_TYPE.UNDIRECTED });
+
+    const components = extractConnectedComponents(nodes, edges);
+    expect(components.length).toBe(2);
+
+    expect(components[0].id).toBe(1);
+    expect(components[0].nodes.length).toBe(2);
+    expect(components[1].id).toBe(2);
+    expect(components[1].nodes.length).toBe(2);
+
+    // Test isomorphism between the two extracted canvas components
+    const check = checkIsomorphism(components[0], components[1]);
+    expect(check.isIsomorphic).toBe(true);
+
+    const annotation = formatIsomorphismAnnotation(check, "G1", "G2");
+    expect(annotation).toContain("G1 ≅ G2 (Isomorphic)");
+    expect(annotation).toContain("|V| = 2");
+  });
 });
+

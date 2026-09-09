@@ -63,6 +63,21 @@ export interface GraphEdge {
 }
 
 /**
+ * Text box annotation placed on the canvas.
+ */
+export interface CanvasTextBox {
+  id: string;
+  x: number;
+  y: number;
+  text: string;
+  fontSize?: number;
+  color?: string;
+  backgroundColor?: string;
+  width?: number;
+  height?: number;
+}
+
+/**
  * Snapshot of graph state for undo/redo history.
  * Uses array format for edges to enable JSON serialization.
  */
@@ -71,4 +86,5 @@ export interface GraphSnapshot {
   edges: [number, GraphEdge[]][];
   nodeCounter: number;
   stackingOrder: number[];  // Node IDs in render order (last = top)
+  textBoxes?: CanvasTextBox[];
 }

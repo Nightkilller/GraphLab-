@@ -26,6 +26,8 @@ import { NodeDefs } from "./defs/NodeDefs";
 import { EdgeDefs } from "./defs/EdgeDefs";
 import { GridBackground } from "./GridBackground";
 import { DragPreviewEdge } from "./DragPreviewEdge";
+import { CanvasTextBoxLayer } from "./CanvasTextBoxLayer";
+import { cn } from "@/lib/utils";
 
 export interface GraphHandle {
   getSvgElement: () => SVGSVGElement | null;
@@ -53,6 +55,9 @@ export function Graph({ ref }: { ref?: Ref<GraphHandle> }) {
   const setViewportZoom = useGraphStore((state) => state.setViewportZoom);
   const setVisualizationAlgorithm = useGraphStore((state) => state.setVisualizationAlgorithm);
   const selectToolActive = useGraphStore((state) => state.selectToolActive);
+  const textToolActive = useGraphStore((state) => state.textToolActive);
+  const addTextBox = useGraphStore((state) => state.addTextBox);
+  const selectTextBox = useGraphStore((state) => state.selectTextBox);
 
   // Shared algorithm node click handler
   const { handleNodeClick } = useAlgorithmNodeClick();
@@ -150,12 +155,12 @@ export function Graph({ ref }: { ref?: Ref<GraphHandle> }) {
       if (handleBoxSelectionPointerDown(event)) {
         return;
       }
-      // When select tool is active, don't pan on drag
-      if (selectToolActive) return;
+      // When select tool or text tool is active, don't pan on drag
+      if (selectToolActive || textToolActive) return;
       // Fall back to panning
       handlePanPointerDown(event);
     },
-    [handleBoxSelectionPointerDown, handlePanPointerDown, selectToolActive]
+    [handleBoxSelectionPointerDown, handlePanPointerDown, selectToolActive, textToolActive]
   );
 
   // Edge dragging hook
@@ -198,13 +203,27 @@ export function Graph({ ref }: { ref?: Ref<GraphHandle> }) {
       selectNode(null);
     }
 
-    // Create node on empty canvas (not during visualization, algorithm selection, box selection, or select tool mode)
-    if (!isNode && !hasSelectedNodes && !isDraggingEdge.current && !isDraggingCanvas.current && !isBoxSelecting.current && !isVisualizing && !currentAlgorithm && !selectToolActive) {
+    // Text tool mode - click on empty canvas to create text box
+    if (!isNode && textToolActive && !isDraggingCanvas.current && !isVisualizing) {
+      const { x, y } = screenToSvgCoords(event.clientX, event.clientY);
+      const newId = addTextBox({ x: Math.round(x), y: Math.round(y), text: "Type note..." });
+      selectTextBox(newId);
+      haptics.medium();
+      return;
+    }
+
+    // Deselect text boxes when clicking empty canvas
+    if (!isNode) {
+      selectTextBox(null);
+    }
+
+    // Create node on empty canvas (not during visualization, algorithm selection, box selection, select tool mode, or text tool mode)
+    if (!isNode && !hasSelectedNodes && !isDraggingEdge.current && !isDraggingCanvas.current && !isBoxSelecting.current && !isVisualizing && !currentAlgorithm && !selectToolActive && !textToolActive) {
       const { x, y } = screenToSvgCoords(event.clientX, event.clientY);
       addNode(x, y);
       haptics.medium();
     }
-  }, [currentAlgorithm, isVisualizing, handleNodeClick, hasSelectedNodes, screenToSvgCoords, selectNode, addNode, isDraggingEdge, isDraggingCanvas, isBoxSelecting, setVisualizationAlgorithm, selectToolActive, haptics]);
+  }, [currentAlgorithm, isVisualizing, handleNodeClick, hasSelectedNodes, screenToSvgCoords, selectNode, addNode, isDraggingEdge, isDraggingCanvas, isBoxSelecting, setVisualizationAlgorithm, selectToolActive, textToolActive, addTextBox, selectTextBox, haptics]);
 
   // Node label editing
   const { handleLabelEdit, labelPopupElement } = useNodeLabelEdit({
@@ -239,7 +258,10 @@ export function Graph({ ref }: { ref?: Ref<GraphHandle> }) {
         ref={graph}
         role="application"
         tabIndex={-1}
-        className="flex-1 w-full h-full cursor-crosshair focus:outline-none"
+        className={cn(
+          "flex-1 w-full h-full focus:outline-none",
+          textToolActive ? "cursor-text" : "cursor-crosshair"
+        )}
         style={{ visibility: isReady ? 'visible' : 'hidden' }}
         onPointerDown={handleCanvasPointerDown}
         onClick={handleCanvasClick}
@@ -286,6 +308,13 @@ export function Graph({ ref }: { ref?: Ref<GraphHandle> }) {
         ))}
 
         <DragPreviewEdge edge={mockEdge} />
+
+        {/* Canvas text boxes layer */}
+        <CanvasTextBoxLayer
+          screenToSvgCoords={screenToSvgCoords}
+          svgToScreenCoords={svgToScreenCoords}
+          isVisualizing={isVisualizing}
+        />
 
         {/* Box selection rectangle - uses same accent color as selected nodes */}
         {selectionBox && (

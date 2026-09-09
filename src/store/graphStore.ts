@@ -9,7 +9,7 @@
 
 import { create } from "zustand";
 import { devtools } from "zustand/middleware";
-import { GraphNode, GraphEdge, GraphSnapshot, SelectedOption, VisualizationTrace } from "../components/Graph/types";
+import { GraphNode, GraphEdge, GraphSnapshot, SelectedOption, VisualizationTrace, CanvasTextBox } from "../components/Graph/types";
 import type { AlgorithmStep } from "../algorithms/types";
 import { calculateAccurateCoords } from "../utils/geometry/calc";
 import { buildTrace, emptyTrace } from "../utils/visualization/buildTrace";
@@ -54,6 +54,7 @@ export interface GraphData {
   edges: Map<number, GraphEdge[]>;
   nodeCounter: number;
   stackingOrder: Set<number>;  // Insertion order = render order (last = top)
+  textBoxes: CanvasTextBox[];
 }
 
 // Selection state
@@ -61,6 +62,7 @@ interface Selection {
   nodeIds: Set<number>;
   edge: { edge: GraphEdge; sourceNode: GraphNode; clickPosition: { x: number; y: number } } | null;
   focusedEdge: { from: number; to: number } | null;
+  textBoxId: string | null;
 }
 
 interface GraphState {
@@ -69,6 +71,7 @@ interface GraphState {
   selection: Selection;
   viewport: Viewport;
   selectToolActive: boolean;
+  textToolActive: boolean;
 }
 
 interface GraphActions {
@@ -86,6 +89,14 @@ interface GraphActions {
   reverseEdge: (fromNodeId: number, toNodeId: number) => void;
   deleteEdge: (fromNodeId: number, toNodeId: number) => void;
   updateNodeLabel: (nodeId: number, label: string) => void;
+
+  // === Text Box Actions ===
+  addTextBox: (box?: Partial<Omit<CanvasTextBox, 'id'>>) => string;
+  updateTextBox: (id: string, updates: Partial<CanvasTextBox>) => void;
+  moveTextBox: (id: string, x: number, y: number) => void;
+  deleteTextBox: (id: string) => void;
+  selectTextBox: (id: string | null) => void;
+  setTextToolActive: (active: boolean) => void;
 
   // === History Actions ===
   undo: () => void;
@@ -145,6 +156,7 @@ const snapshotToData = (snapshot: GraphSnapshot): GraphData => ({
   edges: new Map<number, GraphEdge[]>(snapshot.edges),
   nodeCounter: snapshot.nodeCounter,
   stackingOrder: new Set<number>(snapshot.stackingOrder),
+  textBoxes: snapshot.textBoxes ? [...snapshot.textBoxes] : [],
 });
 
 // ============================================================================
@@ -175,12 +187,14 @@ const initialData: GraphData = {
   edges: new Map(),
   nodeCounter: 0,
   stackingOrder: new Set(),
+  textBoxes: [],
 };
 
 const initialSelection: Selection = {
   nodeIds: new Set<number>(),
   edge: null,
   focusedEdge: null,
+  textBoxId: null,
 };
 
 const initialState: GraphState = {
@@ -189,6 +203,7 @@ const initialState: GraphState = {
   selection: initialSelection,
   viewport: initialViewport,
   selectToolActive: false,
+  textToolActive: false,
 };
 
 // ============================================================================
@@ -257,7 +272,7 @@ export const useGraphStore = create<GraphStore>()(
           newStackingOrder.add(newNodeId);
 
           set({
-            data: { nodes: newNodes, edges: newEdges, nodeCounter: newNodeId, stackingOrder: newStackingOrder },
+            data: { ...data, nodes: newNodes, edges: newEdges, nodeCounter: newNodeId, stackingOrder: newStackingOrder },
             visualization: { ...visualization, input: null },
           });
         }),
@@ -310,7 +325,7 @@ export const useGraphStore = create<GraphStore>()(
         deleteNodes: autoHistory((nodeIds: number[]) => {
           if (nodeIds.length === 0) return;
           get().clearVisualization();
-          const { data } = get();
+          const { data, selection } = get();
           const { nodes, edges, nodeCounter, stackingOrder } = data;
 
           const nodeIdSet = new Set(nodeIds);
@@ -342,8 +357,8 @@ export const useGraphStore = create<GraphStore>()(
           });
 
           set({
-            data: { nodes: newNodes, edges: newEdges, nodeCounter, stackingOrder: newStackingOrder },
-            selection: { nodeIds: new Set<number>(), edge: null, focusedEdge: null },
+            data: { ...data, nodes: newNodes, edges: newEdges, nodeCounter, stackingOrder: newStackingOrder },
+            selection: { ...selection, nodeIds: new Set<number>(), edge: null, focusedEdge: null },
           });
         }),
 
@@ -403,21 +418,21 @@ export const useGraphStore = create<GraphStore>()(
           newEdges.set(fromNode.id, [...sourceEdges, newEdge]);
 
           set({
-            data: { nodes, edges: newEdges, nodeCounter, stackingOrder },
+            data: { ...data, nodes, edges: newEdges, nodeCounter, stackingOrder },
             visualization: { ...visualization, input: null },
           });
         }),
 
         setGraph: autoHistory((nodes: GraphNode[], edges: Map<number, GraphEdge[]>, nodeCounter: number) => {
           get().clearVisualization();
-          const { visualization } = get();
+          const { data, visualization } = get();
 
           // Initialize stacking order from nodes (in creation order)
           const stackingOrder = new Set(nodes.map((n) => n.id));
 
           set({
-            data: { nodes, edges, nodeCounter, stackingOrder },
-            selection: { nodeIds: new Set<number>(), edge: null, focusedEdge: null },
+            data: { ...data, nodes, edges, nodeCounter, stackingOrder },
+            selection: { ...get().selection, nodeIds: new Set<number>(), edge: null, focusedEdge: null },
             visualization: { ...visualization, input: null },
             viewport: { zoom: 1, pan: { x: 0, y: 0 } }, // Reset viewport to center on new graph
           });
@@ -527,12 +542,14 @@ export const useGraphStore = create<GraphStore>()(
 
           set({
             data: {
+              ...data,
               nodes: mergedNodes,
               edges: mergedEdges,
               nodeCounter: nextId,
               stackingOrder: newStackingOrder,
             },
             selection: {
+              ...get().selection,
               nodeIds: newSelectedIds,
               edge: null,
               focusedEdge: null,
@@ -608,7 +625,7 @@ export const useGraphStore = create<GraphStore>()(
           const updatedEdge = { ...currentEdge, type: newType };
 
           set({
-            data: { nodes, edges: newEdges, nodeCounter, stackingOrder },
+            data: { ...data, nodes, edges: newEdges, nodeCounter, stackingOrder },
             selection: {
               ...selection,
               edge: selectedEdge
@@ -651,7 +668,7 @@ export const useGraphStore = create<GraphStore>()(
           const updatedEdge = { ...currentEdge, weight: newWeight };
 
           set({
-            data: { nodes, edges: newEdges, nodeCounter, stackingOrder },
+            data: { ...data, nodes, edges: newEdges, nodeCounter, stackingOrder },
             selection: {
               ...selection,
               edge: selectedEdge
@@ -708,7 +725,7 @@ export const useGraphStore = create<GraphStore>()(
           newEdges.set(toNodeId, [...targetEdges, reversedEdge]);
 
           set({
-            data: { nodes, edges: newEdges, nodeCounter, stackingOrder },
+            data: { ...data, nodes, edges: newEdges, nodeCounter, stackingOrder },
             selection: { ...selection, edge: null },
           });
         }),
@@ -747,7 +764,7 @@ export const useGraphStore = create<GraphStore>()(
           }
 
           set({
-            data: { nodes, edges: newEdges, nodeCounter, stackingOrder },
+            data: { ...data, nodes, edges: newEdges, nodeCounter, stackingOrder },
             selection: { ...selection, edge: null },
           });
         }),
@@ -761,10 +778,10 @@ export const useGraphStore = create<GraphStore>()(
           const historyStore = useGraphHistoryStore.getState();
           const { data } = get();
           historyStore.undo(
-            () => createGraphSnapshot(data.nodes, data.edges, data.nodeCounter, data.stackingOrder),
+            () => createGraphSnapshot(data.nodes, data.edges, data.nodeCounter, data.stackingOrder, data.textBoxes),
             (snapshot) => set({
               data: snapshotToData(snapshot),
-              selection: { nodeIds: new Set<number>(), edge: null, focusedEdge: null },
+              selection: { nodeIds: new Set<number>(), edge: null, focusedEdge: null, textBoxId: null },
             })
           );
         },
@@ -774,10 +791,10 @@ export const useGraphStore = create<GraphStore>()(
           const historyStore = useGraphHistoryStore.getState();
           const { data } = get();
           historyStore.redo(
-            () => createGraphSnapshot(data.nodes, data.edges, data.nodeCounter, data.stackingOrder),
+            () => createGraphSnapshot(data.nodes, data.edges, data.nodeCounter, data.stackingOrder, data.textBoxes),
             (snapshot) => set({
               data: snapshotToData(snapshot),
-              selection: { nodeIds: new Set<number>(), edge: null, focusedEdge: null },
+              selection: { nodeIds: new Set<number>(), edge: null, focusedEdge: null, textBoxId: null },
             })
           );
         },
@@ -826,7 +843,80 @@ export const useGraphStore = create<GraphStore>()(
         },
 
         setSelectToolActive: (active: boolean) => {
-          set({ selectToolActive: active });
+          set({ selectToolActive: active, textToolActive: active ? false : get().textToolActive });
+        },
+
+        setTextToolActive: (active: boolean) => {
+          set({ textToolActive: active, selectToolActive: active ? false : get().selectToolActive });
+        },
+
+        // ========================================
+        // Text Box Actions
+        // ========================================
+
+        addTextBox: autoHistory((box?: Partial<Omit<CanvasTextBox, 'id'>>) => {
+          const { data } = get();
+          const newId = `tb_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+          const newBox: CanvasTextBox = {
+            id: newId,
+            x: box?.x ?? 0,
+            y: box?.y ?? 0,
+            text: box?.text ?? "Type here...",
+            fontSize: box?.fontSize ?? 16,
+            color: box?.color ?? "default",
+            backgroundColor: box?.backgroundColor ?? "card",
+            width: box?.width,
+            height: box?.height,
+          };
+          const updatedTextBoxes = [...data.textBoxes, newBox];
+          set({
+            data: { ...data, textBoxes: updatedTextBoxes },
+            selection: { ...get().selection, textBoxId: newId },
+          });
+          return newId;
+        }),
+
+        updateTextBox: autoHistory((id: string, updates: Partial<CanvasTextBox>) => {
+          const { data } = get();
+          const updatedTextBoxes = data.textBoxes.map((tb) =>
+            tb.id === id ? { ...tb, ...updates } : tb
+          );
+          set({
+            data: { ...data, textBoxes: updatedTextBoxes },
+          });
+        }),
+
+        moveTextBox: batchedAutoHistory((id: string, x: number, y: number) => {
+          const { data } = get();
+          const updatedTextBoxes = data.textBoxes.map((tb) =>
+            tb.id === id ? { ...tb, x, y } : tb
+          );
+          set({
+            data: { ...data, textBoxes: updatedTextBoxes },
+          });
+        }),
+
+        deleteTextBox: autoHistory((id: string) => {
+          const { data, selection } = get();
+          const updatedTextBoxes = data.textBoxes.filter((tb) => tb.id !== id);
+          set({
+            data: { ...data, textBoxes: updatedTextBoxes },
+            selection: {
+              ...selection,
+              textBoxId: selection.textBoxId === id ? null : selection.textBoxId,
+            },
+          });
+        }),
+
+        selectTextBox: (id: string | null) => {
+          const { selection } = get();
+          set({
+            selection: {
+              ...selection,
+              textBoxId: id,
+              nodeIds: id ? new Set() : selection.nodeIds,
+            },
+          });
         },
 
         // ========================================
@@ -1107,4 +1197,19 @@ export const selectIsEdgeFocused = (fromId: number, toId: number) =>
 
     return false;
   };
+
+/**
+ * Selector for all text boxes on canvas.
+ */
+export const selectTextBoxes = (state: GraphStore) => state.data.textBoxes;
+
+/**
+ * Selector for selected text box ID.
+ */
+export const selectSelectedTextBoxId = (state: GraphStore) => state.selection.textBoxId;
+
+/**
+ * Selector for whether Text Tool is active.
+ */
+export const selectIsTextToolActive = (state: GraphStore) => state.textToolActive;
 
