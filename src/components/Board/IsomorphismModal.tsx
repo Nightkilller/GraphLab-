@@ -125,7 +125,8 @@ export const IsomorphismModal = ({ disabled }: IsomorphismModalProps) => {
             size="sm"
           >
             <Shuffle className="w-4 h-4 shrink-0 text-(--color-accent)" />
-            <span className="hidden md:inline">Isomorphism</span>
+            <span className="hidden xl:inline">Isomorphism</span>
+            <span className="hidden md:inline xl:hidden">Iso</span>
           </Button>
         </ToolbarButton>
       </PopoverTrigger>

@@ -1,6 +1,6 @@
 import { Button } from "../ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
-import { ToolbarButton, ToolbarSeparator } from "../ui/toolbar";
+import { ToolbarButton } from "../ui/toolbar";
 import { Minus, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -22,11 +22,7 @@ export const SpeedControl = ({
   onIncrease,
 }: SpeedControlProps) => {
   return (
-    <>
-      <ToolbarSeparator className="mx-0.5 shrink-0" />
-
-      {/* Speed control group */}
-      <div role="group" aria-label="Speed control" className="flex items-center gap-0.5 shrink-0">
+    <div role="group" aria-label="Speed control" className="flex items-center gap-0.5 shrink-0">
         <Tooltip>
           <TooltipTrigger asChild>
             <ToolbarButton asChild>
@@ -72,6 +68,5 @@ export const SpeedControl = ({
           <TooltipContent>Faster</TooltipContent>
         </Tooltip>
       </div>
-    </>
   );
 };

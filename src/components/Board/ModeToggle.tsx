@@ -1,5 +1,5 @@
 import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
-import { ToolbarToggleGroup, ToolbarToggleItem, ToolbarSeparator } from "../ui/toolbar";
+import { ToolbarToggleGroup, ToolbarToggleItem } from "../ui/toolbar";
 import { VisualizationMode } from "../../constants/visualization";
 import { useHasHover } from "../../hooks/useMediaQuery";
 
@@ -13,10 +13,9 @@ export const ModeToggle = ({ mode, onModeChange, disabled }: ModeToggleProps) =>
   const hasHover = useHasHover();
 
   return (
-    <>
-      <ToolbarToggleGroup
-        type="single"
-        value={mode}
+    <ToolbarToggleGroup
+      type="single"
+      value={mode}
         onValueChange={(value) => value && onModeChange(value as VisualizationMode)}
         disabled={disabled}
       >
@@ -65,8 +64,5 @@ export const ModeToggle = ({ mode, onModeChange, disabled }: ModeToggleProps) =>
           </ToolbarToggleItem>
         )}
       </ToolbarToggleGroup>
-
-      <ToolbarSeparator />
-    </>
   );
 };

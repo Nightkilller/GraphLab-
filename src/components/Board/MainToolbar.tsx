@@ -117,21 +117,7 @@ export function MainToolbar({ graphRendererRef }: MainToolbarProps) {
     >
       <GrainTexture baseFrequency={3} className="rounded-xl" />
 
-      {/* Brand logo (icon only) adjacent to the Auto option */}
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <a
-            href="/"
-            title="GraphLab Home"
-            className="flex items-center justify-center p-1 mr-0.5 rounded-md hover:bg-(--color-paper)/80 transition-all select-none group shrink-0"
-            aria-label="GraphLab Home"
-          >
-            <img src="/favicon.svg" alt="GraphLab logo" className="w-5 h-5 rounded transition-transform group-hover:scale-110" />
-          </a>
-        </TooltipTrigger>
-        <TooltipContent>GraphLab Home</TooltipContent>
-      </Tooltip>
-
+      {/* Execution Mode (Auto / Step) */}
       <div className="shrink-0">
         <ModeToggle
           mode={visualizationMode}
@@ -172,6 +158,9 @@ export function MainToolbar({ graphRendererRef }: MainToolbarProps) {
         </TooltipContent>
       </Tooltip>
 
+      <ToolbarSeparator className="mx-0.5 shrink-0" />
+
+      {/* Algorithm Selection */}
       <AlgorithmPicker
         selectedAlgo={visualizationAlgorithm}
         onSelect={handleAlgoChange}
@@ -179,20 +168,23 @@ export function MainToolbar({ graphRendererRef }: MainToolbarProps) {
       />
 
       <ToolbarSeparator className="mx-0.5 shrink-0" />
-      <GraphGenerator disabled={isVisualizing} />
-      <ImageToGraphModal disabled={isVisualizing} />
-      <DegreeSequenceModal disabled={isVisualizing} />
-      <IsomorphismModal disabled={isVisualizing} />
-      <ComplementModal disabled={isVisualizing} />
-      <BipartiteModal disabled={isVisualizing} />
-      <SubgraphModal disabled={isVisualizing} />
 
-      {/* Edge Visibility Toggle (All / Dim Unused / Hide Unused) */}
-      <EdgeVisibilityToggle disabled={!hasNodes} />
+      {/* Graph Theory & Creation Suite */}
+      <div className="flex items-center gap-1 shrink-0">
+        <GraphGenerator disabled={isVisualizing} />
+        <ImageToGraphModal disabled={isVisualizing} />
+        <DegreeSequenceModal disabled={isVisualizing} />
+        <IsomorphismModal disabled={isVisualizing} />
+        <ComplementModal disabled={isVisualizing} />
+        <BipartiteModal disabled={isVisualizing} />
+        <SubgraphModal disabled={isVisualizing} />
+        <EdgeVisibilityToggle disabled={!hasNodes} />
+        <AITutorPanel disabled={isVisualizing} />
+      </div>
 
-      {/* AI Graph Theory Tutor */}
-      <AITutorPanel disabled={isVisualizing} />
+      {isDesktop && <ToolbarSeparator className="mx-0.5 shrink-0" />}
 
+      {/* Speed Control */}
       {isDesktop && (
         <SpeedControl
           speedMultiplier={currentSpeedMultiplier}

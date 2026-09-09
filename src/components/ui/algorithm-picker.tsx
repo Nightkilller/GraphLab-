@@ -96,13 +96,13 @@ export const AlgorithmPicker = ({
             disabled={disabled}
             aria-label="Select algorithm"
             className={cn(
-              "w-auto gap-1.5 justify-center px-2 shrink-0 h-8 max-w-[130px]"
+              "w-auto gap-1.5 justify-center px-2 shrink-0 h-8 max-w-[120px]"
             )}
             size="sm"
           >
             <TriggerIcon className="w-4 h-4 shrink-0" />
             <span className="hidden md:inline truncate">
-              {selectedAlgo ? selectedAlgo.text : "Algorithm"}
+              {selectedAlgo && selectedAlgo.key !== "select" ? selectedAlgo.text : "Algorithm"}
             </span>
           </Button>
         </ToolbarButton>
