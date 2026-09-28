@@ -22,6 +22,7 @@ import { ComplementModal } from "./ComplementModal";
 import { BipartiteModal } from "./BipartiteModal";
 import { AITutorPanel } from "./AITutorPanel";
 import { EdgeVisibilityToggle } from "./EdgeVisibilityToggle";
+import { MatrixModal } from "./MatrixModal";
 import { toast } from "sonner";
 import {
   DropdownMenu,
@@ -219,6 +220,7 @@ export function MainToolbar({ graphRendererRef }: MainToolbarProps) {
         <IsomorphismModal disabled={isVisualizing} />
         <ComplementModal disabled={isVisualizing} />
         <BipartiteModal disabled={isVisualizing} />
+        <MatrixModal disabled={isVisualizing} />
         <EdgeVisibilityToggle disabled={!hasNodes} />
         <AITutorPanel disabled={isVisualizing} />
       </div>

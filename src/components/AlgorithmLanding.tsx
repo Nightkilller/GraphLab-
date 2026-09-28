@@ -8,7 +8,6 @@ const algorithms = [
   { id: "dfs", name: "DFS" },
   { id: "bfs-pathfinding", name: "BFS Pathfinding" },
   { id: "dfs-pathfinding", name: "DFS Pathfinding" },
-  { id: "cycle-detection", name: "Cycle Detection" },
   { id: "eulerian", name: "Eulerian Path/Circuit" },
   { id: "hamiltonian", name: "Hamiltonian Path/Circuit" },
 ];
