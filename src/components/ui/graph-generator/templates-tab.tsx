@@ -4,15 +4,7 @@ import {
   generateCycle,
   generateComplete,
   generateStar,
-  generateBinaryTree,
-  generateGrid,
-  generateDAG,
   generateWeighted,
-  generateKonigsberg,
-  generateEulerHouse,
-  generatePetersen,
-  generateSelfComplementaryC5,
-  generateCompleteBipartiteK33,
   type GeneratedGraph,
 } from "../../../utils/graph/graphGenerator";
 
@@ -20,7 +12,6 @@ interface TemplateConfig {
   id: string;
   name: string;
   description: string;
-  category?: "standard" | "graph-theory";
   icon: React.ComponentType<{ className?: string }>;
   generate: () => GeneratedGraph;
 }
@@ -114,77 +105,6 @@ const templates: TemplateConfig[] = [
     generate: () => generateStar(6),
   },
   {
-    id: "tree",
-    name: "Tree",
-    description: "Binary tree",
-    icon: ({ className }) => (
-      <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.25">
-        <circle cx="12" cy="4" r="2" />
-        <circle cx="6" cy="12" r="2" />
-        <circle cx="18" cy="12" r="2" />
-        <circle cx="3" cy="20" r="2" />
-        <circle cx="9" cy="20" r="2" />
-        <circle cx="15" cy="20" r="2" />
-        <circle cx="21" cy="20" r="2" />
-        <line x1="10.5" y1="5.5" x2="7.5" y2="10.5" />
-        <line x1="13.5" y1="5.5" x2="16.5" y2="10.5" />
-        <line x1="4.8" y1="13.5" x2="3.6" y2="18" />
-        <line x1="7.2" y1="13.5" x2="8.4" y2="18" />
-        <line x1="16.8" y1="13.5" x2="15.6" y2="18" />
-        <line x1="19.2" y1="13.5" x2="20.4" y2="18" />
-      </svg>
-    ),
-    generate: () => generateBinaryTree(4),
-  },
-  {
-    id: "dag",
-    name: "DAG",
-    description: "Directed acyclic",
-    icon: ({ className }) => (
-      <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.25">
-        <circle cx="6" cy="3" r="2" />
-        <circle cx="18" cy="3" r="2" />
-        <circle cx="12" cy="12" r="2" />
-        <circle cx="12" cy="21" r="2" />
-        <line x1="7.5" y1="4.5" x2="10.5" y2="10.5" />
-        <line x1="16.5" y1="4.5" x2="13.5" y2="10.5" />
-        <line x1="12" y1="14" x2="12" y2="19" />
-      </svg>
-    ),
-    generate: () => generateDAG(4, 2),
-  },
-  {
-    id: "grid",
-    name: "Grid",
-    description: "2D lattice",
-    icon: ({ className }) => (
-      <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.25">
-        <circle cx="4" cy="4" r="2" />
-        <circle cx="12" cy="4" r="2" />
-        <circle cx="20" cy="4" r="2" />
-        <circle cx="4" cy="12" r="2" />
-        <circle cx="12" cy="12" r="2" />
-        <circle cx="20" cy="12" r="2" />
-        <circle cx="4" cy="20" r="2" />
-        <circle cx="12" cy="20" r="2" />
-        <circle cx="20" cy="20" r="2" />
-        <line x1="6" y1="4" x2="10" y2="4" />
-        <line x1="14" y1="4" x2="18" y2="4" />
-        <line x1="6" y1="12" x2="10" y2="12" />
-        <line x1="14" y1="12" x2="18" y2="12" />
-        <line x1="6" y1="20" x2="10" y2="20" />
-        <line x1="14" y1="20" x2="18" y2="20" />
-        <line x1="4" y1="6" x2="4" y2="10" />
-        <line x1="12" y1="6" x2="12" y2="10" />
-        <line x1="20" y1="6" x2="20" y2="10" />
-        <line x1="4" y1="14" x2="4" y2="18" />
-        <line x1="12" y1="14" x2="12" y2="18" />
-        <line x1="20" y1="14" x2="20" y2="18" />
-      </svg>
-    ),
-    generate: () => generateGrid(3, 4),
-  },
-  {
     id: "weighted",
     name: "Weighted",
     description: "For pathfinding",
@@ -210,106 +130,9 @@ const templates: TemplateConfig[] = [
     ),
     generate: () => generateWeighted(),
   },
-  // Educational Graph Theory Templates
-  {
-    id: "konigsberg",
-    name: "Königsberg",
-    description: "Euler Bridges",
-    category: "graph-theory",
-    icon: ({ className }) => (
-      <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.25">
-        <circle cx="5" cy="8" r="2" />
-        <circle cx="12" cy="12" r="2" />
-        <circle cx="5" cy="16" r="2" />
-        <circle cx="19" cy="12" r="2" />
-        <line x1="7" y1="8" x2="10" y2="11" />
-        <line x1="7" y1="8" x2="17" y2="11" />
-        <line x1="12" y1="14" x2="7" y2="16" />
-        <line x1="17" y1="13" x2="7" y2="16" />
-        <line x1="14" y1="12" x2="17" y2="12" />
-        <line x1="5" y1="10" x2="5" y2="14" strokeDasharray="1 1" />
-      </svg>
-    ),
-    generate: () => generateKonigsberg(),
-  },
-  {
-    id: "euler-house",
-    name: "Euler House",
-    description: "Eulerian Path",
-    category: "graph-theory",
-    icon: ({ className }) => (
-      <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.25">
-        <rect x="6" y="10" width="12" height="10" rx="0.5" />
-        <line x1="6" y1="10" x2="18" y2="20" />
-        <line x1="18" y1="10" x2="6" y2="20" />
-        <polyline points="6,10 12,4 18,10" />
-      </svg>
-    ),
-    generate: () => generateEulerHouse(),
-  },
-  {
-    id: "petersen",
-    name: "Petersen",
-    description: "Hypohamiltonian",
-    category: "graph-theory",
-    icon: ({ className }) => (
-      <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.25">
-        <circle cx="12" cy="12" r="9" strokeDasharray="2 2" />
-        <polygon points="12,5 18,10 16,17 8,17 6,10" />
-        <polygon points="12,8 15,14 8,10 16,10 9,14" />
-      </svg>
-    ),
-    generate: () => generatePetersen(),
-  },
-  {
-    id: "c5-complement",
-    name: "C5 Cycle",
-    description: "Self-Complement",
-    category: "graph-theory",
-    icon: ({ className }) => (
-      <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.25">
-        <polygon points="12,4 19,9 16,18 8,18 5,9" />
-        <circle cx="12" cy="4" r="1.5" fill="currentColor" />
-        <circle cx="19" cy="9" r="1.5" fill="currentColor" />
-        <circle cx="16" cy="18" r="1.5" fill="currentColor" />
-        <circle cx="8" cy="18" r="1.5" fill="currentColor" />
-        <circle cx="5" cy="9" r="1.5" fill="currentColor" />
-      </svg>
-    ),
-    generate: () => generateSelfComplementaryC5(),
-  },
-  {
-    id: "k33-bipartite",
-    name: "K3,3 Utility",
-    description: "Complete Bipartite",
-    category: "graph-theory",
-    icon: ({ className }) => (
-      <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.25">
-        <circle cx="6" cy="6" r="1.5" />
-        <circle cx="12" cy="6" r="1.5" />
-        <circle cx="18" cy="6" r="1.5" />
-        <circle cx="6" cy="18" r="1.5" />
-        <circle cx="12" cy="18" r="1.5" />
-        <circle cx="18" cy="18" r="1.5" />
-        <line x1="6" y1="7.5" x2="6" y2="16.5" />
-        <line x1="6" y1="7.5" x2="12" y2="16.5" />
-        <line x1="6" y1="7.5" x2="18" y2="16.5" />
-        <line x1="12" y1="7.5" x2="6" y2="16.5" />
-        <line x1="12" y1="7.5" x2="12" y2="16.5" />
-        <line x1="12" y1="7.5" x2="18" y2="16.5" />
-        <line x1="18" y1="7.5" x2="6" y2="16.5" />
-        <line x1="18" y1="7.5" x2="12" y2="16.5" />
-        <line x1="18" y1="7.5" x2="18" y2="16.5" />
-      </svg>
-    ),
-    generate: () => generateCompleteBipartiteK33(),
-  },
 ];
 
 export const TemplatesTab = ({ onGenerate }: TemplatesTabProps) => {
-  const standardTemplates = templates.filter((t) => t.category !== "graph-theory");
-  const graphTheoryTemplates = templates.filter((t) => t.category === "graph-theory");
-
   return (
     <div className="space-y-3">
       <div>
@@ -317,26 +140,9 @@ export const TemplatesTab = ({ onGenerate }: TemplatesTabProps) => {
           Standard Shapes
         </div>
         <div className="grid grid-cols-3 gap-2">
-          {standardTemplates.map((template) => (
+          {templates.map((template) => (
             <CardButton key={template.id} onClick={() => onGenerate(template.generate())}>
               <template.icon className="w-8 h-8 text-(--color-text-muted)" />
-              <span className="font-semibold text-[11px] text-(--color-text) text-center leading-tight">
-                {template.name}
-              </span>
-            </CardButton>
-          ))}
-        </div>
-      </div>
-
-      <div>
-        <div className="text-[11px] uppercase tracking-wider font-semibold text-(--color-accent) mb-2 px-0.5 flex items-center justify-between">
-          <span>Graph Theory Classics</span>
-          <span className="text-[10px] font-normal text-(--color-text-muted)">Euler & Hamilton</span>
-        </div>
-        <div className="grid grid-cols-3 gap-2">
-          {graphTheoryTemplates.map((template) => (
-            <CardButton key={template.id} onClick={() => onGenerate(template.generate())}>
-              <template.icon className="w-8 h-8 text-(--color-accent)" />
               <span className="font-semibold text-[11px] text-(--color-text) text-center leading-tight">
                 {template.name}
               </span>

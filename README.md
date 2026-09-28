@@ -41,7 +41,7 @@ GraphLab is designed to be completely fluid and interactive. You can use mouse, 
 - **Edit Edge Weights & Direction**: Click on any edge to customize its weight (`-999` to `999`) or toggle between **Directed** ($\to$) and **Undirected** ($\leftrightarrow$).
 - **Marquee Selection (`B`)**: Click the Box Select tool or press `B`, then drag a rectangle to select multiple vertices. Drag the selection to move the group, or press `Backspace` / `Delete` to delete them in bulk.
 - **Photoshop-Style Text Tool (`T`)**: Click the **Text Tool** in the toolbar or press `T`, then click anywhere on the canvas to write custom notes, annotations, theorem labels, or formulas. Click any existing text block to edit or drag to reposition it.
-- **Generate Template Graphs**: Click **Generate** to spawn standard graphs (*Complete $K_n$, Cycle $C_n$, Bipartite $K_{m,n}$, Star, Tree, Grid*) neatly placed side-by-side on your canvas.
+- **Generate Template Graphs**: Click **Generate** to spawn standard graphs (*Path, Cycle, Complete $K_n$, Star, Weighted*) neatly placed side-by-side on your canvas.
 
 ---
 
