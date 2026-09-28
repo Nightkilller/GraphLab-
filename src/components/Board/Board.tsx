@@ -16,6 +16,7 @@ import { VisualizationState } from "../../constants/visualization";
 import { GrainTexture } from "../ui/grain-texture";
 
 import { MainToolbar } from "./MainToolbar";
+import { TextToolBar } from "./TextToolBar";
 import { MobileControls } from "./MobileControls";
 import { ThemeSelector } from "./ThemeSelector";
 import { AlgorithmHint } from "./AlgorithmHint";
@@ -115,6 +116,7 @@ export const Board = () => {
             />
           )}
           <MainToolbar graphRendererRef={graphRendererRef} />
+          <TextToolBar />
         </div>
 
         {/* Step controls - fixed position, top on mobile, below toolbar on desktop */}

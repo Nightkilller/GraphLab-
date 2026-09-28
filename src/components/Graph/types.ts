@@ -71,10 +71,26 @@ export interface CanvasTextBox {
   y: number;
   text: string;
   fontSize?: number;
+  fontFamily?: string;
+  fontWeight?: number;
+  fontStyle?: "normal" | "italic";
   color?: string;
   backgroundColor?: string;
+  borderEnabled?: boolean;
+  borderColor?: string;
   width?: number;
   height?: number;
+}
+
+export interface TextBoxStyleOptions {
+  fontSize?: number;
+  fontFamily?: string;
+  fontWeight?: number;
+  fontStyle?: "normal" | "italic";
+  color?: string;
+  backgroundColor?: string;
+  borderEnabled?: boolean;
+  borderColor?: string;
 }
 
 /**

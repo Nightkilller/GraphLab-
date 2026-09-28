@@ -149,19 +149,40 @@ export function Graph({ ref }: { ref?: Ref<GraphHandle> }) {
     isGestureActive,
   });
 
+  // Track whether pointerDown already handled the event (e.g. text tool created a box)
+  const pointerDownHandled = useRef(false);
+
   // Combined pointer down handler: box selection takes priority when Shift is held or selectToolActive is true
   const handleCanvasPointerDown = useCallback(
     (event: React.PointerEvent<SVGSVGElement>) => {
+      pointerDownHandled.current = false;
+
+      // Text tool: create text box immediately on pointerDown on empty canvas
+      if (textToolActive && !isVisualizing) {
+        const target = event.target as SVGElement;
+        const isNode = target.tagName === "circle";
+        const isTextBox = Boolean(target.closest?.(".canvas-text-box"));
+        if (!isNode && !isTextBox) {
+          const { x, y } = screenToSvgCoords(event.clientX, event.clientY);
+          const newId = addTextBox({ x: Math.round(x), y: Math.round(y), text: "" });
+          selectTextBox(newId);
+          setEditingTextBoxId(newId);
+          haptics.medium();
+          pointerDownHandled.current = true;
+          return; // Don't let panning/box-selection interfere
+        }
+      }
+
       // Try box selection first (activates with Shift or select tool active)
       if (handleBoxSelectionPointerDown(event)) {
         return;
       }
-      // When select tool or text tool is active, don't pan on drag
-      if (selectToolActive || textToolActive) return;
+      // When select tool is active, don't pan on drag
+      if (selectToolActive) return;
       // Fall back to panning
       handlePanPointerDown(event);
     },
-    [handleBoxSelectionPointerDown, handlePanPointerDown, selectToolActive, textToolActive]
+    [handleBoxSelectionPointerDown, handlePanPointerDown, selectToolActive, textToolActive, isVisualizing, screenToSvgCoords, addTextBox, selectTextBox, setEditingTextBoxId, haptics]
   );
 
   // Edge dragging hook
@@ -210,13 +231,9 @@ export function Graph({ ref }: { ref?: Ref<GraphHandle> }) {
       selectNode(null);
     }
 
-    // Text tool mode - click on empty canvas to create text box and enter edit mode immediately
-    if (!isNode && textToolActive && !isDraggingCanvas.current && !isVisualizing) {
-      const { x, y } = screenToSvgCoords(event.clientX, event.clientY);
-      const newId = addTextBox({ x: Math.round(x), y: Math.round(y), text: "" });
-      selectTextBox(newId);
-      setEditingTextBoxId(newId);
-      haptics.medium();
+    // Text tool mode - already handled in pointerDown, skip click
+    if (textToolActive && pointerDownHandled.current) {
+      pointerDownHandled.current = false;
       return;
     }
 

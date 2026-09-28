@@ -5,6 +5,7 @@ import {
   generateComplete,
   generateStar,
   generateWeighted,
+  generateRandomWeightedGraph,
   type GeneratedGraph,
 } from "../../../utils/graph/graphGenerator";
 
@@ -129,6 +130,27 @@ const templates: TemplateConfig[] = [
       </svg>
     ),
     generate: () => generateWeighted(),
+  },
+  {
+    id: "random-weighted",
+    name: "Random Weighted",
+    description: "For Dijkstra algorithm",
+    icon: ({ className }) => (
+      <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.25">
+        <circle cx="5" cy="5" r="2" />
+        <circle cx="19" cy="5" r="2" />
+        <circle cx="19" cy="19" r="2" />
+        <circle cx="5" cy="19" r="2" />
+        <circle cx="12" cy="12" r="2" />
+        <line x1="6.5" y1="6.5" x2="10.5" y2="10.5" />
+        <line x1="17.5" y1="6.5" x2="13.5" y2="10.5" />
+        <line x1="17.5" y1="17.5" x2="13.5" y2="13.5" />
+        <line x1="6.5" y1="17.5" x2="10.5" y2="13.5" />
+        <line x1="7" y1="5" x2="17" y2="5" />
+        <text x="12" y="4" fontSize="4.5" fill="currentColor" stroke="none" textAnchor="middle" fontWeight="bold">W</text>
+      </svg>
+    ),
+    generate: () => generateRandomWeightedGraph(6, 1, 15),
   },
 ];
 

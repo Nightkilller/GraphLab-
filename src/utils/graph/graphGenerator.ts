@@ -778,3 +778,68 @@ export function generateCompleteBipartiteK33(): GeneratedGraph {
   return { nodes, edges, nodeCounter: nodes.length };
 }
 
+/**
+ * Generate a random connected weighted graph specifically designed for Dijkstra's algorithm.
+ * Guarantees connectivity so shortest paths exist between vertices, with positive integer weights.
+ */
+export function generateRandomWeightedGraph(
+  nodeCount: number = 6,
+  minWeight: number = 1,
+  maxWeight: number = 15
+): GeneratedGraph {
+  const nodes: GraphNode[] = [];
+  const edges = new Map<number, GraphEdge[]>();
+
+  const radius = Math.min(HALF_WIDTH, HALF_HEIGHT) * 0.85;
+  const positions = circularLayout(nodeCount, 0, 0, radius);
+
+  for (let i = 0; i < nodeCount; i++) {
+    nodes.push({
+      id: i + 1,
+      x: positions[i].x,
+      y: positions[i].y,
+      r: NODE.RADIUS,
+    });
+    edges.set(i + 1, []);
+  }
+
+  // 1. Guarantee connectivity by building a random spanning tree
+  const connected = [0];
+  const remaining = Array.from({ length: nodeCount - 1 }, (_, i) => i + 1);
+  const addedEdges = new Set<string>();
+
+  while (remaining.length > 0) {
+    const rIdx = Math.floor(Math.random() * remaining.length);
+    const to = remaining.splice(rIdx, 1)[0];
+    const cIdx = Math.floor(Math.random() * connected.length);
+    const from = connected[cIdx];
+    connected.push(to);
+
+    const edgeKey = `${Math.min(from, to)}-${Math.max(from, to)}`;
+    addedEdges.add(edgeKey);
+    const weight = randomWeight(minWeight, maxWeight);
+    addEdgeToMap(edges, nodes[from], nodes[to], EDGE_TYPE.UNDIRECTED, weight);
+  }
+
+  // 2. Add extra random edges to create alternative weighted paths for Dijkstra
+  const extraEdgesCount = Math.max(2, Math.floor(nodeCount * 0.6));
+  let attempts = 0;
+  let addedExtra = 0;
+
+  while (addedExtra < extraEdgesCount && attempts < 60) {
+    attempts++;
+    const from = Math.floor(Math.random() * nodeCount);
+    const to = Math.floor(Math.random() * nodeCount);
+    if (from === to) continue;
+    const edgeKey = `${Math.min(from, to)}-${Math.max(from, to)}`;
+    if (addedEdges.has(edgeKey)) continue;
+
+    addedEdges.add(edgeKey);
+    const weight = randomWeight(minWeight, maxWeight);
+    addEdgeToMap(edges, nodes[from], nodes[to], EDGE_TYPE.UNDIRECTED, weight);
+    addedExtra++;
+  }
+
+  return { nodes, edges, nodeCounter: nodeCount };
+}
+

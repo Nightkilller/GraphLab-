@@ -9,7 +9,7 @@
 
 import { create } from "zustand";
 import { devtools } from "zustand/middleware";
-import { GraphNode, GraphEdge, GraphSnapshot, SelectedOption, VisualizationTrace, CanvasTextBox } from "../components/Graph/types";
+import { GraphNode, GraphEdge, GraphSnapshot, SelectedOption, VisualizationTrace, CanvasTextBox, TextBoxStyleOptions } from "../components/Graph/types";
 import type { AlgorithmStep } from "../algorithms/types";
 import { calculateAccurateCoords } from "../utils/geometry/calc";
 import { buildTrace, emptyTrace } from "../utils/visualization/buildTrace";
@@ -74,6 +74,7 @@ interface GraphState {
   selectToolActive: boolean;
   textToolActive: boolean;
   editingTextBoxId: string | null;
+  defaultTextBoxStyle: TextBoxStyleOptions;
 }
 
 interface GraphActions {
@@ -104,6 +105,7 @@ interface GraphActions {
   selectItems: (nodeIds: number[], textBoxIds: string[]) => void;
   setEditingTextBoxId: (id: string | null) => void;
   setTextToolActive: (active: boolean) => void;
+  setDefaultTextBoxStyle: (style: Partial<TextBoxStyleOptions>) => void;
 
   // === History Actions ===
   undo: () => void;
@@ -213,6 +215,16 @@ const initialState: GraphState = {
   selectToolActive: false,
   textToolActive: false,
   editingTextBoxId: null,
+  defaultTextBoxStyle: {
+    fontSize: 15,
+    fontFamily: "Inter, -apple-system, sans-serif",
+    fontWeight: 500,
+    fontStyle: "normal",
+    color: "default",
+    backgroundColor: "card",
+    borderEnabled: false,
+    borderColor: "var(--color-accent)",
+  },
 };
 
 // ============================================================================
@@ -875,21 +887,30 @@ export const useGraphStore = create<GraphStore>()(
           set({ textToolActive: active, selectToolActive: active ? false : get().selectToolActive });
         },
 
+        setDefaultTextBoxStyle: (style: Partial<TextBoxStyleOptions>) => {
+          set({ defaultTextBoxStyle: { ...get().defaultTextBoxStyle, ...style } });
+        },
+
         // ========================================
         // Text Box Actions
         // ========================================
 
         addTextBox: autoHistory((box?: Partial<Omit<CanvasTextBox, 'id'>>) => {
-          const { data } = get();
+          const { data, defaultTextBoxStyle } = get();
           const newId = `tb_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
           const newBox: CanvasTextBox = {
             id: newId,
             x: box?.x ?? 0,
             y: box?.y ?? 0,
             text: box?.text ?? "",
-            fontSize: box?.fontSize ?? 16,
-            color: box?.color ?? "default",
-            backgroundColor: box?.backgroundColor ?? "card",
+            fontSize: box?.fontSize ?? defaultTextBoxStyle.fontSize ?? 15,
+            fontFamily: box?.fontFamily ?? defaultTextBoxStyle.fontFamily ?? "Inter, -apple-system, sans-serif",
+            fontWeight: box?.fontWeight ?? defaultTextBoxStyle.fontWeight ?? 500,
+            fontStyle: box?.fontStyle ?? defaultTextBoxStyle.fontStyle ?? "normal",
+            color: box?.color ?? defaultTextBoxStyle.color ?? "default",
+            backgroundColor: box?.backgroundColor ?? defaultTextBoxStyle.backgroundColor ?? "card",
+            borderEnabled: box?.borderEnabled ?? defaultTextBoxStyle.borderEnabled ?? false,
+            borderColor: box?.borderColor ?? defaultTextBoxStyle.borderColor,
             width: box?.width,
             height: box?.height,
           };
@@ -903,12 +924,23 @@ export const useGraphStore = create<GraphStore>()(
         }),
 
         updateTextBox: autoHistory((id: string, updates: Partial<CanvasTextBox>) => {
-          const { data } = get();
+          const { data, defaultTextBoxStyle } = get();
           const updatedTextBoxes = data.textBoxes.map((tb) =>
             tb.id === id ? { ...tb, ...updates } : tb
           );
           set({
             data: { ...data, textBoxes: updatedTextBoxes },
+            defaultTextBoxStyle: {
+              ...defaultTextBoxStyle,
+              ...(updates.fontSize !== undefined && { fontSize: updates.fontSize }),
+              ...(updates.fontFamily !== undefined && { fontFamily: updates.fontFamily }),
+              ...(updates.fontWeight !== undefined && { fontWeight: updates.fontWeight }),
+              ...(updates.fontStyle !== undefined && { fontStyle: updates.fontStyle }),
+              ...(updates.color !== undefined && { color: updates.color }),
+              ...(updates.backgroundColor !== undefined && { backgroundColor: updates.backgroundColor }),
+              ...(updates.borderEnabled !== undefined && { borderEnabled: updates.borderEnabled }),
+              ...(updates.borderColor !== undefined && { borderColor: updates.borderColor }),
+            },
           });
         }),
 
@@ -1318,4 +1350,9 @@ export const selectEditingTextBoxId = (state: GraphStore) => state.editingTextBo
  * Selector for whether Text Tool is active.
  */
 export const selectIsTextToolActive = (state: GraphStore) => state.textToolActive;
+
+/**
+ * Selector for default text box styling.
+ */
+export const selectDefaultTextBoxStyle = (state: GraphStore) => state.defaultTextBoxStyle;
 

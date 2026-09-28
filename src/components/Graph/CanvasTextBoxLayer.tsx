@@ -8,7 +8,7 @@ import {
   selectEditingTextBoxId,
 } from "../../store/graphStore";
 import { CanvasTextBox } from "./types";
-import { Trash2, Edit3, Check } from "lucide-react";
+import { Trash2, Edit3, Check, Bold, Italic, Square, ChevronDown } from "lucide-react";
 import { cn } from "../../lib/utils";
 
 interface CanvasTextBoxLayerProps {
@@ -22,6 +22,16 @@ const FONT_SIZES = [
   { label: "M", size: 15 },
   { label: "L", size: 19 },
   { label: "XL", size: 24 },
+  { label: "2X", size: 32 },
+];
+
+const FONT_FAMILIES = [
+  { label: "Sans", value: "Inter, -apple-system, sans-serif" },
+  { label: "Serif", value: "Georgia, 'Times New Roman', serif" },
+  { label: "Mono", value: "'JetBrains Mono', 'Fira Code', monospace" },
+  { label: "Hand", value: "'Caveat', 'Comic Sans MS', cursive" },
+  { label: "Outfit", value: "'Outfit', sans-serif" },
+  { label: "Roboto", value: "'Roboto', sans-serif" },
 ];
 
 const COLOR_PALETTE = [
@@ -31,6 +41,17 @@ const COLOR_PALETTE = [
   { name: "Rose", color: "#f43f5e", bg: "card" },
   { name: "Amber", color: "#f59e0b", bg: "note" },
   { name: "Purple", color: "#a855f7", bg: "card" },
+  { name: "Indigo", color: "#6366f1", bg: "card" },
+  { name: "Pink", color: "#ec4899", bg: "card" },
+];
+
+const BORDER_COLORS = [
+  { name: "Accent", color: "var(--color-accent)" },
+  { name: "Gray", color: "#9ca3af" },
+  { name: "Red", color: "#ef4444" },
+  { name: "Green", color: "#22c55e" },
+  { name: "Blue", color: "#3b82f6" },
+  { name: "Orange", color: "#f97316" },
 ];
 
 export const CanvasTextBoxLayer = ({
@@ -48,19 +69,21 @@ export const CanvasTextBoxLayer = ({
   const moveTextBoxes = useGraphStore((state) => state.moveTextBoxes);
   const updateTextBox = useGraphStore((state) => state.updateTextBox);
   const deleteTextBox = useGraphStore((state) => state.deleteTextBox);
-  const textToolActive = useGraphStore((state) => state.textToolActive);
 
   // Local draft text for active textarea
   const [editText, setEditText] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const [showFontPicker, setShowFontPicker] = useState(false);
+  const [showBorderPicker, setShowBorderPicker] = useState(false);
 
-  // Sync draft text when editing begins
+  // Sync draft text when editing begins (only on editingTextBoxId change, NOT on textBoxes change)
   useEffect(() => {
     if (editingTextBoxId) {
-      const current = textBoxes.find((b) => b.id === editingTextBoxId);
+      const current = useGraphStore.getState().data.textBoxes.find((b) => b.id === editingTextBoxId);
       setEditText(current ? current.text : "");
     }
-  }, [editingTextBoxId, textBoxes]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editingTextBoxId]);
 
   // Dragging state
   const dragState = useRef<{
@@ -100,29 +123,64 @@ export const CanvasTextBoxLayer = ({
     const trimmed = editText.trim();
     if (trimmed.length > 0) {
       updateTextBox(editingTextBoxId, { text: trimmed });
+      selectTextBox(editingTextBoxId);
     } else {
       deleteTextBox(editingTextBoxId);
+      selectTextBox(null);
     }
     setEditingTextBoxId(null);
-  }, [editingTextBoxId, editText, updateTextBox, deleteTextBox, setEditingTextBoxId]);
+  }, [editingTextBoxId, editText, updateTextBox, deleteTextBox, selectTextBox, setEditingTextBoxId]);
 
-  // Focus textarea when editing starts
+  // Focus textarea when editing starts — use rAF because the portaled textarea
+  // may not have mounted yet on the very first render cycle
   useEffect(() => {
-    if (editingTextBoxId && textareaRef.current) {
-      textareaRef.current.focus();
-      textareaRef.current.select();
-    }
+    if (!editingTextBoxId) return;
+    const tryFocus = () => {
+      if (textareaRef.current) {
+        textareaRef.current.focus();
+        textareaRef.current.select();
+      } else {
+        // Textarea portal hasn't rendered yet; retry next frame
+        requestAnimationFrame(tryFocus);
+      }
+    };
+    requestAnimationFrame(tryFocus);
   }, [editingTextBoxId]);
+
+  // Keyboard events when text box is selected but NOT being edited
+  // (Delete/Backspace to delete, Enter to start editing, Escape to deselect)
+  useEffect(() => {
+    if (!selectedTextBoxId || editingTextBoxId) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Don't intercept keypresses inside inputs/textareas
+      const target = e.target as HTMLElement;
+      if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable)) {
+        return;
+      }
+
+      if (e.key === "Backspace" || e.key === "Delete") {
+        e.preventDefault();
+        deleteTextBox(selectedTextBoxId);
+        selectTextBox(null);
+      } else if (e.key === "Escape") {
+        e.preventDefault();
+        selectTextBox(null);
+      } else if (e.key === "Enter") {
+        e.preventDefault();
+        const box = textBoxes.find((b) => b.id === selectedTextBoxId);
+        if (box) startEditing(box);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [selectedTextBoxId, editingTextBoxId, deleteTextBox, selectTextBox, textBoxes, startEditing]);
 
   // Handle pointer down for dragging / selection
   const handlePointerDown = useCallback((e: React.PointerEvent<SVGGElement>, box: CanvasTextBox) => {
     if (isVisualizing) return;
     e.stopPropagation();
-
-    if (textToolActive) {
-      startEditing(box);
-      return;
-    }
 
     // Select text box if not already part of multi-selection
     if (!selectedTextBoxIds.has(box.id)) {
@@ -139,7 +197,7 @@ export const CanvasTextBoxLayer = ({
 
     const target = e.currentTarget;
     target.setPointerCapture(e.pointerId);
-  }, [isVisualizing, textToolActive, startEditing, selectedTextBoxIds, selectTextBox, screenToSvgCoords]);
+  }, [isVisualizing, selectedTextBoxIds, selectTextBox, screenToSvgCoords]);
 
   const handlePointerMove = useCallback((e: React.PointerEvent<SVGGElement>) => {
     if (!dragState.current) return;
@@ -164,6 +222,8 @@ export const CanvasTextBoxLayer = ({
     }
   }, [screenToSvgCoords, selectedTextBoxIds, moveTextBox, moveTextBoxes]);
 
+  const lastClickRef = useRef<{ id: string; time: number }>({ id: "", time: 0 });
+
   const handlePointerUp = useCallback((e: React.PointerEvent<SVGGElement>, box: CanvasTextBox) => {
     if (!dragState.current) return;
     const hadMoved = dragState.current.hasMoved;
@@ -174,11 +234,18 @@ export const CanvasTextBoxLayer = ({
       // Ignore if pointer already released
     }
 
-    // Single click without movement selects
-    if (!hadMoved && !textToolActive) {
-      selectTextBox(box.id);
+    // Single click without movement selects; double-click activates inline text edit
+    if (!hadMoved) {
+      const now = Date.now();
+      if (lastClickRef.current.id === box.id && now - lastClickRef.current.time < 350) {
+        startEditing(box);
+        lastClickRef.current = { id: "", time: 0 };
+      } else {
+        lastClickRef.current = { id: box.id, time: now };
+        selectTextBox(box.id);
+      }
     }
-  }, [selectTextBox, textToolActive]);
+  }, [selectTextBox, startEditing]);
 
   const editingBox = useMemo(() => {
     return textBoxes.find((b) => b.id === editingTextBoxId);
@@ -188,22 +255,24 @@ export const CanvasTextBoxLayer = ({
     return textBoxes.find((b) => b.id === selectedTextBoxId);
   }, [textBoxes, selectedTextBoxId]);
 
+  const activeBox = editingBox || selectedBox;
+
   // Calculate screen coordinates for floating editor and toolbar
   const editorScreenPos = useMemo(() => {
     if (!editingBox) return null;
     return svgToScreenCoords(editingBox.x, editingBox.y);
   }, [editingBox, svgToScreenCoords]);
 
-  const selectedScreenPos = useMemo(() => {
-    if (!selectedBox) return null;
-    const metrics = getBoxMetrics(selectedBox);
-    const screen = svgToScreenCoords(selectedBox.x, selectedBox.y);
+  const toolbarScreenPos = useMemo(() => {
+    if (!activeBox) return null;
+    const metrics = getBoxMetrics(activeBox);
+    const screen = svgToScreenCoords(activeBox.x, activeBox.y);
     return {
       x: screen.x,
-      y: screen.y - 42,
+      y: screen.y - 12,
       width: metrics.width,
     };
-  }, [selectedBox, svgToScreenCoords, getBoxMetrics]);
+  }, [activeBox, svgToScreenCoords, getBoxMetrics]);
 
   return (
     <>
@@ -215,15 +284,27 @@ export const CanvasTextBoxLayer = ({
 
           const isCustomColor = box.color && box.color !== "default";
           const textColor = isCustomColor ? box.color : "var(--color-text)";
+          const fontFamily = box.fontFamily || "Inter, -apple-system, sans-serif";
+          const fontWeight = box.fontWeight || 500;
+          const fontStyle = box.fontStyle || "normal";
 
           let cardBg = "var(--color-surface)";
           let cardBorder = isSelected ? "var(--color-accent)" : "var(--color-divider)";
-          if (box.backgroundColor === "badge") {
-            cardBg = "rgba(16, 185, 129, 0.08)";
-            cardBorder = isSelected ? "var(--color-accent)" : "rgba(16, 185, 129, 0.3)";
-          } else if (box.backgroundColor === "note") {
-            cardBg = "rgba(245, 158, 11, 0.08)";
-            cardBorder = isSelected ? "var(--color-accent)" : "rgba(245, 158, 11, 0.3)";
+          let cardStrokeWidth = isSelected ? 2.5 : 1;
+
+          if (box.backgroundColor && box.backgroundColor !== "card") {
+            cardBg = box.backgroundColor;
+          } else if (isCustomColor) {
+            cardBg = `${box.color}14`;
+          }
+
+          // Apply custom border or colored border
+          if (box.borderEnabled) {
+            cardBorder = box.borderColor || (isCustomColor ? box.color! : "var(--color-accent)");
+            cardStrokeWidth = isSelected ? 3 : 2;
+          } else if (isCustomColor) {
+            cardBorder = isSelected ? "var(--color-accent)" : `${box.color}40`;
+            cardStrokeWidth = isSelected ? 2.5 : 1.5;
           }
 
           return (
@@ -250,7 +331,7 @@ export const CanvasTextBoxLayer = ({
                 ry={10}
                 fill={cardBg}
                 stroke={cardBorder}
-                strokeWidth={isSelected ? 2.5 : 1}
+                strokeWidth={cardStrokeWidth}
                 strokeDasharray={isSelected ? "none" : undefined}
                 className="transition-colors duration-150"
                 style={{
@@ -265,8 +346,9 @@ export const CanvasTextBoxLayer = ({
                   y={paddingY + fontSize * 0.85}
                   fill={textColor}
                   fontSize={fontSize}
-                  fontFamily="Inter, -apple-system, sans-serif"
-                  fontWeight={500}
+                  fontFamily={fontFamily}
+                  fontWeight={fontWeight}
+                  fontStyle={fontStyle}
                   className="pointer-events-none"
                 >
                   {lines.map((line, idx) => (
@@ -301,82 +383,217 @@ export const CanvasTextBoxLayer = ({
         })}
       </g>
 
-      {/* Floating Toolbar when a single text box is selected (Portaled to body) */}
-      {selectedBox && !editingTextBoxId && selectedScreenPos && createPortal(
+      {/* Floating Toolbar when a text box is selected or being edited (Portaled to body) */}
+      {activeBox && toolbarScreenPos && createPortal(
         <div
           style={{
             position: "fixed",
-            left: selectedScreenPos.x,
-            top: selectedScreenPos.y,
+            left: toolbarScreenPos.x,
+            top: toolbarScreenPos.y,
             transform: "translateY(-100%)",
-            zIndex: 60,
+            zIndex: 75,
           }}
-          className="flex items-center gap-1 p-1 bg-(--color-surface) border border-(--color-divider) rounded-xl shadow-xl backdrop-blur-md animate-in fade-in zoom-in-95 duration-150"
+          className="flex flex-col items-start gap-1 animate-in fade-in zoom-in-95 duration-150"
           onPointerDown={(e) => e.stopPropagation()}
         >
-          {/* Edit Button */}
-          <button
-            onClick={() => startEditing(selectedBox)}
-            title="Edit Text"
-            className="p-1 rounded-md text-xs font-semibold hover:bg-(--color-paper) text-(--color-text) flex items-center gap-1 transition-colors"
-          >
-            <Edit3 size={13} />
-            <span>Edit</span>
-          </button>
-
-          <div className="w-[1px] h-4 bg-(--color-divider) mx-0.5" />
-
-          {/* Font Size Swatches */}
-          <div className="flex items-center gap-0.5">
-            {FONT_SIZES.map((f) => (
+          {/* Main Row */}
+          <div className="flex items-center gap-1 p-1 bg-(--color-surface) border border-(--color-divider) rounded-xl shadow-xl backdrop-blur-md">
+            {/* Edit / Done Button */}
+            {editingBox ? (
               <button
-                key={f.size}
-                onClick={() => updateTextBox(selectedBox.id, { fontSize: f.size })}
+                onClick={commitEdit}
+                title="Done Editing"
+                className="px-2 py-1 rounded-md text-xs font-semibold bg-(--color-accent) text-white flex items-center gap-1 hover:opacity-90 transition-opacity"
+              >
+                <Check size={13} />
+                <span>Done</span>
+              </button>
+            ) : (
+              <button
+                onClick={() => startEditing(activeBox)}
+                title="Edit Text (2x click)"
+                className="p-1 rounded-md text-xs font-semibold hover:bg-(--color-paper) text-(--color-text) flex items-center gap-1 transition-colors"
+              >
+                <Edit3 size={13} />
+                <span>Edit</span>
+              </button>
+            )}
+
+            <div className="w-[1px] h-4 bg-(--color-divider) mx-0.5" />
+
+            {/* Font Family Picker */}
+            <div className="relative">
+              <button
+                onClick={() => { setShowFontPicker(!showFontPicker); setShowBorderPicker(false); }}
+                title="Font Family"
                 className={cn(
-                  "px-1.5 py-0.5 rounded text-[11px] font-bold transition-all",
-                  (selectedBox.fontSize || 15) === f.size
-                    ? "bg-(--color-accent) text-white shadow-xs"
+                  "px-1.5 py-0.5 rounded text-[11px] font-medium flex items-center gap-0.5 transition-colors",
+                  showFontPicker
+                    ? "bg-(--color-accent)/15 text-(--color-accent)"
                     : "text-(--color-text-muted) hover:bg-(--color-paper) hover:text-(--color-text)"
                 )}
               >
-                {f.label}
+                <span style={{ fontFamily: activeBox.fontFamily || "Inter" }}>
+                  {FONT_FAMILIES.find(f => f.value === (activeBox.fontFamily || FONT_FAMILIES[0].value))?.label || "Sans"}
+                </span>
+                <ChevronDown size={10} />
               </button>
-            ))}
-          </div>
+              {showFontPicker && (
+                <div className="absolute top-full left-0 mt-1 bg-(--color-surface) border border-(--color-divider) rounded-lg shadow-2xl p-1 min-w-[130px] z-[85]">
+                  {FONT_FAMILIES.map((f) => (
+                    <button
+                      key={f.value}
+                      onClick={() => { updateTextBox(activeBox.id, { fontFamily: f.value }); setShowFontPicker(false); }}
+                      className={cn(
+                        "w-full text-left px-2 py-1 rounded text-[12px] transition-colors",
+                        (activeBox.fontFamily || FONT_FAMILIES[0].value) === f.value
+                          ? "bg-(--color-accent)/15 text-(--color-accent) font-semibold"
+                          : "text-(--color-text) hover:bg-(--color-paper)"
+                      )}
+                      style={{ fontFamily: f.value }}
+                    >
+                      {f.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
 
-          <div className="w-[1px] h-4 bg-(--color-divider) mx-0.5" />
+            <div className="w-[1px] h-4 bg-(--color-divider) mx-0.5" />
 
-          {/* Color Swatches */}
-          <div className="flex items-center gap-1">
-            {COLOR_PALETTE.map((p) => (
+            {/* Font Size Swatches */}
+            <div className="flex items-center gap-0.5">
+              {FONT_SIZES.map((f) => (
+                <button
+                  key={f.size}
+                  onClick={() => updateTextBox(activeBox.id, { fontSize: f.size })}
+                  className={cn(
+                    "px-1.5 py-0.5 rounded text-[11px] font-bold transition-all",
+                    (activeBox.fontSize || 15) === f.size
+                      ? "bg-(--color-accent) text-white shadow-xs"
+                      : "text-(--color-text-muted) hover:bg-(--color-paper) hover:text-(--color-text)"
+                  )}
+                >
+                  {f.label}
+                </button>
+              ))}
+            </div>
+
+            <div className="w-[1px] h-4 bg-(--color-divider) mx-0.5" />
+
+            {/* Bold Toggle */}
+            <button
+              onClick={() => updateTextBox(activeBox.id, { fontWeight: (activeBox.fontWeight || 500) >= 700 ? 500 : 700 })}
+              title="Bold"
+              className={cn(
+                "p-1 rounded-md transition-colors",
+                (activeBox.fontWeight || 500) >= 700
+                  ? "bg-(--color-accent)/15 text-(--color-accent)"
+                  : "text-(--color-text-muted) hover:bg-(--color-paper) hover:text-(--color-text)"
+              )}
+            >
+              <Bold size={13} />
+            </button>
+
+            {/* Italic Toggle */}
+            <button
+              onClick={() => updateTextBox(activeBox.id, { fontStyle: activeBox.fontStyle === "italic" ? "normal" : "italic" })}
+              title="Italic"
+              className={cn(
+                "p-1 rounded-md transition-colors",
+                activeBox.fontStyle === "italic"
+                  ? "bg-(--color-accent)/15 text-(--color-accent)"
+                  : "text-(--color-text-muted) hover:bg-(--color-paper) hover:text-(--color-text)"
+              )}
+            >
+              <Italic size={13} />
+            </button>
+
+            <div className="w-[1px] h-4 bg-(--color-divider) mx-0.5" />
+
+            {/* Color Swatches */}
+            <div className="flex items-center gap-1">
+              {COLOR_PALETTE.map((p) => (
+                <button
+                  key={p.name}
+                  onClick={() => updateTextBox(activeBox.id, { color: p.color, backgroundColor: p.bg })}
+                  title={p.name}
+                  className={cn(
+                    "w-4 h-4 rounded-full border border-(--color-divider) transition-transform hover:scale-110",
+                    (activeBox.color || "default") === p.color && "ring-2 ring-(--color-accent) scale-110"
+                  )}
+                  style={{
+                    backgroundColor: p.color === "default" ? "var(--color-text)" : p.color,
+                  }}
+                />
+              ))}
+            </div>
+
+            <div className="w-[1px] h-4 bg-(--color-divider) mx-0.5" />
+
+            {/* Border Toggle + Color Picker */}
+            <div className="relative">
               <button
-                key={p.name}
-                onClick={() => updateTextBox(selectedBox.id, { color: p.color, backgroundColor: p.bg })}
-                title={p.name}
-                className={cn(
-                  "w-4 h-4 rounded-full border border-(--color-divider) transition-transform hover:scale-110",
-                  (selectedBox.color || "default") === p.color && "ring-2 ring-(--color-accent) scale-110"
-                )}
-                style={{
-                  backgroundColor: p.color === "default" ? "var(--color-text)" : p.color,
+                onClick={() => {
+                  if (!activeBox.borderEnabled) {
+                    updateTextBox(activeBox.id, { borderEnabled: true, borderColor: "var(--color-accent)" });
+                  } else {
+                    setShowBorderPicker(!showBorderPicker);
+                    setShowFontPicker(false);
+                  }
                 }}
-              />
-            ))}
+                title={activeBox.borderEnabled ? "Border Options" : "Add Border"}
+                className={cn(
+                  "p-1 rounded-md transition-colors flex items-center gap-0.5",
+                  activeBox.borderEnabled
+                    ? "bg-(--color-accent)/15 text-(--color-accent)"
+                    : "text-(--color-text-muted) hover:bg-(--color-paper) hover:text-(--color-text)"
+                )}
+              >
+                <Square size={13} />
+                {activeBox.borderEnabled && <ChevronDown size={9} />}
+              </button>
+              {showBorderPicker && activeBox.borderEnabled && (
+                <div className="absolute top-full right-0 mt-1 bg-(--color-surface) border border-(--color-divider) rounded-lg shadow-2xl p-1.5 min-w-[120px] z-[85]">
+                  <div className="flex items-center gap-1 mb-1.5">
+                    {BORDER_COLORS.map((bc) => (
+                      <button
+                        key={bc.name}
+                        onClick={() => { updateTextBox(activeBox.id, { borderColor: bc.color }); }}
+                        title={bc.name}
+                        className={cn(
+                          "w-4 h-4 rounded-full border border-(--color-divider)/50 transition-transform hover:scale-110",
+                          (activeBox.borderColor || "var(--color-accent)") === bc.color && "ring-2 ring-(--color-accent) scale-110"
+                        )}
+                        style={{ backgroundColor: bc.color }}
+                      />
+                    ))}
+                  </div>
+                  <button
+                    onClick={() => { updateTextBox(activeBox.id, { borderEnabled: false, borderColor: undefined }); setShowBorderPicker(false); }}
+                    className="w-full text-left px-2 py-0.5 rounded text-[11px] text-red-500 hover:bg-red-500/10 transition-colors"
+                  >
+                    Remove Border
+                  </button>
+                </div>
+              )}
+            </div>
+
+            <div className="w-[1px] h-4 bg-(--color-divider) mx-0.5" />
+
+            {/* Delete Button */}
+            <button
+              onClick={() => {
+                deleteTextBox(activeBox.id);
+                selectTextBox(null);
+                setEditingTextBoxId(null);
+              }}
+              title="Delete Text Box"
+              className="p-1 rounded-md text-red-500 hover:bg-red-500/10 transition-colors"
+            >
+              <Trash2 size={13} />
+            </button>
           </div>
-
-          <div className="w-[1px] h-4 bg-(--color-divider) mx-0.5" />
-
-          {/* Delete Button */}
-          <button
-            onClick={() => {
-              deleteTextBox(selectedBox.id);
-              selectTextBox(null);
-            }}
-            title="Delete Text Box"
-            className="p-1 rounded-md text-red-500 hover:bg-red-500/10 transition-colors"
-          >
-            <Trash2 size={13} />
-          </button>
         </div>,
         document.body
       )}
@@ -406,7 +623,15 @@ export const CanvasTextBoxLayer = ({
           className="flex flex-col animate-in fade-in zoom-in-95 duration-100"
           onPointerDown={(e) => e.stopPropagation()}
         >
-          <div className="relative shadow-2xl rounded-xl border-2 border-(--color-accent) bg-(--color-surface) overflow-hidden min-w-[220px]">
+          <div
+            className="relative shadow-2xl rounded-xl bg-(--color-surface) overflow-hidden min-w-[240px]"
+            style={{
+              border: editingBox.borderEnabled
+                ? `2px solid ${editingBox.borderColor || "var(--color-accent)"}`
+                : "2px solid var(--color-accent)",
+              boxShadow: "0 14px 40px -6px rgba(0, 0, 0, 0.45)",
+            }}
+          >
             <textarea
               ref={textareaRef}
               value={editText}
@@ -415,7 +640,8 @@ export const CanvasTextBoxLayer = ({
                 if (e.key === "Escape") {
                   e.stopPropagation();
                   commitEdit();
-                } else if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+                } else if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
                   e.stopPropagation();
                   commitEdit();
                 }
@@ -424,16 +650,19 @@ export const CanvasTextBoxLayer = ({
               className="w-full p-2.5 bg-transparent text-(--color-text) focus:outline-none resize font-medium leading-snug"
               style={{
                 fontSize: `${editingBox.fontSize || 15}px`,
+                fontFamily: editingBox.fontFamily || "Inter, -apple-system, sans-serif",
+                fontWeight: editingBox.fontWeight || 500,
+                fontStyle: editingBox.fontStyle || "normal",
                 color: editingBox.color && editingBox.color !== "default" ? editingBox.color : "var(--color-text)",
               }}
-              placeholder="Type note or text here..."
+              placeholder="Type note or text here... (Enter to save)"
             />
-            <div className="flex items-center justify-between px-2 py-1 bg-(--color-paper) border-t border-(--color-divider) text-[10px] text-(--color-text-muted)">
-              <span>Esc or ⌘+Enter to save</span>
+            <div className="flex items-center justify-between px-2.5 py-1 bg-(--color-paper) border-t border-(--color-divider) text-[10px] text-(--color-text-muted)">
+              <span>Shift+Enter newline • Enter to save</span>
               <div className="flex gap-1">
                 <button
                   onClick={commitEdit}
-                  className="px-2 py-0.5 rounded bg-(--color-accent) text-white font-semibold hover:opacity-90 flex items-center gap-1"
+                  className="px-2 py-0.5 rounded bg-(--color-accent) text-white font-semibold hover:opacity-90 flex items-center gap-1 transition-opacity"
                 >
                   <Check size={11} />
                   <span>Done</span>

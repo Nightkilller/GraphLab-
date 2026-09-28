@@ -23,17 +23,25 @@ export function drawTextBox(
 
   ctx.save();
 
-  // Colors
-  const textColor = box.color && box.color !== "default" ? box.color : getCSSVar("--color-text");
+  // Colors & Styles
+  const isCustomColor = box.color && box.color !== "default";
+  const textColor = isCustomColor ? box.color! : getCSSVar("--color-text");
   let bgColor = getCSSVar("--color-surface");
   let borderColor = isSelected ? getCSSVar("--color-accent") : getCSSVar("--color-divider");
+  let lineWidth = isSelected ? 2 : 1;
 
-  if (box.backgroundColor === "badge") {
-    bgColor = "rgba(16, 185, 129, 0.08)";
-    borderColor = isSelected ? getCSSVar("--color-accent") : "rgba(16, 185, 129, 0.3)";
-  } else if (box.backgroundColor === "note") {
-    bgColor = "rgba(245, 158, 11, 0.08)";
-    borderColor = isSelected ? getCSSVar("--color-accent") : "rgba(245, 158, 11, 0.3)";
+  if (box.backgroundColor && box.backgroundColor !== "card") {
+    bgColor = box.backgroundColor;
+  } else if (isCustomColor) {
+    bgColor = `${box.color}14`;
+  }
+
+  if (box.borderEnabled) {
+    borderColor = box.borderColor || (isCustomColor ? box.color! : getCSSVar("--color-accent"));
+    lineWidth = isSelected ? 3 : 2;
+  } else if (isCustomColor) {
+    borderColor = isSelected ? getCSSVar("--color-accent") : `${box.color}40`;
+    lineWidth = isSelected ? 2 : 1.5;
   }
 
   // Draw background card with rounded corners
@@ -55,12 +63,16 @@ export function drawTextBox(
   // Reset shadow for border
   ctx.shadowColor = "transparent";
   ctx.strokeStyle = borderColor;
-  ctx.lineWidth = isSelected ? 2 : 1;
+  ctx.lineWidth = lineWidth;
   ctx.stroke();
 
-  // Draw text lines
+  // Draw text lines with font family, weight, style
+  const fontStyle = box.fontStyle === "italic" ? "italic" : "normal";
+  const fontWeight = box.fontWeight || 500;
+  const fontFamily = box.fontFamily || "Inter, -apple-system, sans-serif";
+
   ctx.fillStyle = textColor;
-  ctx.font = `500 ${fontSize}px Inter, -apple-system, sans-serif`;
+  ctx.font = `${fontStyle} ${fontWeight} ${fontSize}px ${fontFamily}`;
   ctx.textBaseline = "middle";
 
   lines.forEach((line, idx) => {

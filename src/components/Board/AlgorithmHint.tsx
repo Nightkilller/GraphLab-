@@ -1,6 +1,9 @@
 import { AnimatePresence, useReducedMotion } from "motion/react";
 import * as m from "motion/react-m";
 import { cn } from "@/lib/utils";
+import { Dices } from "lucide-react";
+import { useGraphStore } from "@/store/graphStore";
+import { generateRandomWeightedGraph } from "@/utils/graph/graphGenerator";
 
 interface AlgorithmHintProps {
   text: string;
@@ -9,6 +12,11 @@ interface AlgorithmHintProps {
 
 export const AlgorithmHint = ({ text, algorithmName }: AlgorithmHintProps) => {
   const prefersReducedMotion = useReducedMotion();
+
+  const handleGenerateRandomWeighted = () => {
+    const generated = generateRandomWeightedGraph(6, 1, 15);
+    useGraphStore.getState().setGraph(generated.nodes, generated.edges, generated.nodeCounter);
+  };
 
   return (
     <m.div
@@ -30,7 +38,7 @@ export const AlgorithmHint = ({ text, algorithmName }: AlgorithmHintProps) => {
         {/* Content layer - persists for width animation */}
         <m.div
           transition={{ duration: prefersReducedMotion ? 0 : 0.6, type: 'spring', bounce: 0.4 }}
-          className="relative rounded-md text-sm text-center bg-(--color-surface) text-(--color-text) overflow-hidden flex justify-center"
+          className="relative rounded-md text-sm text-center bg-(--color-surface) text-(--color-text) overflow-hidden flex justify-center items-center"
         >
           <AnimatePresence mode='popLayout' initial={false}>
             <m.span
@@ -39,9 +47,20 @@ export const AlgorithmHint = ({ text, algorithmName }: AlgorithmHintProps) => {
               exit={prefersReducedMotion ? undefined : { opacity: 0, scale: 0.95, filter: 'blur(1px)', x: '-100%' }}
               transition={{ duration: prefersReducedMotion ? 0 : 0.6, type: 'spring', bounce: 0.2 }}
               key={text}
-              className="font-medium z-10 px-4 py-2.5 w-fit whitespace-nowrap"
+              className="font-medium z-10 px-4 py-2.5 w-fit whitespace-nowrap flex items-center gap-2.5"
             >
-              {text}
+              <span>{text}</span>
+              {algorithmName === "dijkstra" && (
+                <button
+                  type="button"
+                  onClick={handleGenerateRandomWeighted}
+                  className="pointer-events-auto inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded bg-amber-500/15 text-amber-500 dark:text-amber-400 hover:bg-amber-500/25 border border-amber-500/30 transition-colors cursor-pointer"
+                  title="Generate a random weighted graph for Dijkstra"
+                >
+                  <Dices className="w-3.5 h-3.5" />
+                  <span>Random Weighted Graph</span>
+                </button>
+              )}
             </m.span>
           </AnimatePresence>
         </m.div>

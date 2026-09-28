@@ -712,6 +712,25 @@ describe('graphStore', () => {
       expect(useGraphStore.getState().data.textBoxes[0].text).toBe('Updated Text')
       expect(useGraphStore.getState().data.textBoxes[0].fontSize).toBe(20)
 
+      // Update text box styling (font family, weight, style, border)
+      updateTextBox(id, {
+        text: 'Formatted Note',
+        fontSize: 24,
+        fontFamily: "'JetBrains Mono', monospace",
+        fontWeight: 700,
+        fontStyle: 'italic',
+        borderEnabled: true,
+        borderColor: '#ef4444',
+      })
+      const box = useGraphStore.getState().data.textBoxes[0]
+      expect(box.text).toBe('Formatted Note')
+      expect(box.fontSize).toBe(24)
+      expect(box.fontFamily).toBe("'JetBrains Mono', monospace")
+      expect(box.fontWeight).toBe(700)
+      expect(box.fontStyle).toBe('italic')
+      expect(box.borderEnabled).toBe(true)
+      expect(box.borderColor).toBe('#ef4444')
+
       // Move text box
       moveTextBox(id, 250, 350)
       expect(useGraphStore.getState().data.textBoxes[0].x).toBe(250)
@@ -728,6 +747,24 @@ describe('graphStore', () => {
       // Redo deletion
       redo()
       expect(useGraphStore.getState().data.textBoxes).toHaveLength(0)
+    })
+
+    it('preserves defaultTextBoxStyle across text box creations', () => {
+      const { setDefaultTextBoxStyle, addTextBox } = useGraphStore.getState()
+      setDefaultTextBoxStyle({
+        fontSize: 24,
+        color: '#f43f5e',
+        borderEnabled: true,
+        borderColor: '#f43f5e',
+      })
+
+      const newId = addTextBox({ x: 50, y: 80, text: 'Custom Default Note' })
+      const createdBox = useGraphStore.getState().data.textBoxes.find(b => b.id === newId)
+      expect(createdBox).toBeDefined()
+      expect(createdBox?.fontSize).toBe(24)
+      expect(createdBox?.color).toBe('#f43f5e')
+      expect(createdBox?.borderEnabled).toBe(true)
+      expect(createdBox?.borderColor).toBe('#f43f5e')
     })
   })
 })

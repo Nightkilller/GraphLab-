@@ -157,7 +157,16 @@ export function useGraphActions() {
   const toggleTextTool = useCallback(() => {
     const s = useGraphStore.getState();
     if (s.visualization.state === VisualizationState.RUNNING) return;
-    s.setTextToolActive(!s.textToolActive);
+    const pan = s.viewport.pan;
+    const offset = (s.data.textBoxes.length % 6) * 24;
+    const newId = s.addTextBox({
+      x: -Math.round(pan.x) + offset,
+      y: -Math.round(pan.y) + offset,
+      text: "",
+    });
+    s.setTextToolActive(true);
+    s.selectTextBox(newId);
+    s.setEditingTextBoxId(newId);
   }, []);
 
   // -------------------------------------------------------------------------
