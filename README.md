@@ -57,8 +57,6 @@ GraphLab is designed to be completely fluid and interactive. You can use mouse, 
   - Click **Complement** to inspect the complement invariant $|E(G)| + |E(\overline{G})| = \binom{n}{2}$ and launch an interactive side-by-side comparison on the canvas.
 - **Bipartite Verification & 2-Coloring**:
   - Click **Bipartite** to run a BFS 2-coloring test. If bipartite, click **"Rearrange in 2-Column Layout"**; if not, view the exact odd-cycle counterexample proof.
-- **Subgraph Extraction**:
-  - Click **Subgraph** to pick a subset of vertices and isolate their induced subgraph.
 
 ---
 

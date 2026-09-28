@@ -19,7 +19,6 @@ import { ImageToGraphModal } from "../ui/image-to-graph-modal";
 import { DegreeSequenceModal } from "./DegreeSequenceModal";
 import { IsomorphismModal } from "./IsomorphismModal";
 import { ComplementModal } from "./ComplementModal";
-import { SubgraphModal } from "./SubgraphModal";
 import { BipartiteModal } from "./BipartiteModal";
 import { AITutorPanel } from "./AITutorPanel";
 import { EdgeVisibilityToggle } from "./EdgeVisibilityToggle";
@@ -59,6 +58,9 @@ export function MainToolbar({ graphRendererRef }: MainToolbarProps) {
   const setSelectToolActive = useGraphStore((state) => state.setSelectToolActive);
   const textToolActive = useGraphStore((state) => state.textToolActive);
   const setTextToolActive = useGraphStore((state) => state.setTextToolActive);
+  const addTextBox = useGraphStore((state) => state.addTextBox);
+  const selectTextBox = useGraphStore((state) => state.selectTextBox);
+  const setEditingTextBoxId = useGraphStore((state) => state.setEditingTextBoxId);
 
   const renderMode = useSettingsStore((state) => state.renderMode);
   const setRenderMode = useSettingsStore((state) => state.setRenderMode);
@@ -169,11 +171,17 @@ export function MainToolbar({ graphRendererRef }: MainToolbarProps) {
               size="icon-sm"
               disabled={isVisualizing}
               onClick={() => {
-                const next = !textToolActive;
-                setTextToolActive(next);
-                if (next) {
-                  toast.info("Text Tool active (T): Click anywhere on canvas to write text");
-                }
+                const s = useGraphStore.getState();
+                const pan = s.viewport.pan;
+                const offset = (s.data.textBoxes.length % 6) * 24;
+                const newId = addTextBox({
+                  x: -Math.round(pan.x) + offset,
+                  y: -Math.round(pan.y) + offset,
+                  text: "",
+                });
+                setTextToolActive(true);
+                selectTextBox(newId);
+                setEditingTextBoxId(newId);
               }}
               aria-label="Text Tool (T)"
               className={cn(
@@ -187,8 +195,8 @@ export function MainToolbar({ graphRendererRef }: MainToolbarProps) {
         </TooltipTrigger>
         <TooltipContent>
           {textToolActive
-            ? "Text Tool (Active — Click canvas to add text)"
-            : "Text Tool (T) — Click canvas to write text"}
+            ? "Text Tool (Active — Click canvas or type in text box)"
+            : "Text Tool (T) — Add text box and type immediately"}
         </TooltipContent>
       </Tooltip>
 
@@ -211,7 +219,6 @@ export function MainToolbar({ graphRendererRef }: MainToolbarProps) {
         <IsomorphismModal disabled={isVisualizing} />
         <ComplementModal disabled={isVisualizing} />
         <BipartiteModal disabled={isVisualizing} />
-        <SubgraphModal disabled={isVisualizing} />
         <EdgeVisibilityToggle disabled={!hasNodes} />
         <AITutorPanel disabled={isVisualizing} />
       </div>
