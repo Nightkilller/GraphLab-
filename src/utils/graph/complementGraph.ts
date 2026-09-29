@@ -247,11 +247,14 @@ export function computeSideBySideComplement(
   const leftShift = -separation / 2;
   const rightShift = separation / 2;
 
+  // Add downward clearance if graph is too close to top bar
+  const yShift = minY < -40 ? Math.round(-40 - minY) : 0;
+
   // 1. Create Left (Original) Nodes
   const leftNodes: GraphNode[] = nodes.map((n) => ({
     ...n,
     x: Math.round(n.x + leftShift),
-    y: Math.round(n.y),
+    y: Math.round(n.y + yShift),
     label: n.label || String(n.id),
   }));
 
@@ -265,7 +268,7 @@ export function computeSideBySideComplement(
     return {
       id: compId,
       x: Math.round(n.x + rightShift),
-      y: Math.round(n.y),
+      y: Math.round(n.y + yShift),
       r: n.r,
       label: `${origLabel}'`,
     };
