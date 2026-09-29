@@ -1,7 +1,7 @@
-import { useMemo, useRef, useEffect, useCallback, useState, useImperativeHandle, type ComponentRef, Suspense } from "react";
+import { useMemo, useRef, useEffect, useCallback, useState, useImperativeHandle, type ComponentRef } from "react";
 import type { Ref } from "react";
 import { Canvas, useThree, useFrame } from "@react-three/fiber";
-import { OrbitControls, PerspectiveCamera, Grid, Environment } from "@react-three/drei";
+import { OrbitControls, PerspectiveCamera, Grid } from "@react-three/drei";
 
 type OrbitControlsRef = ComponentRef<typeof OrbitControls>;
 import { useGraphStore } from "../../store/graphStore";
@@ -58,14 +58,12 @@ function CameraController({
   baseCameraDistance,
   onZoomChange,
   onPanChange,
-  onIntroProgress,
 }: {
   zoom: number;
   pan: { x: number; y: number };
   baseCameraDistance: number;
   onZoomChange: (zoom: number) => void;
   onPanChange: (x: number, y: number) => void;
-  onIntroProgress: (progress: number) => void;
 }) {
   const { camera, gl } = useThree();
   const controlsRef = useRef<OrbitControlsRef | null>(null);
@@ -141,9 +139,6 @@ function CameraController({
 
     introProgress.current += delta;
     const t = Math.min(introProgress.current / INTRO_DURATION, 1);
-
-    // Update intro animation state
-    onIntroProgress(t);
 
     const eased = easeOutCubic(t);
 
@@ -274,7 +269,7 @@ export function Graph3D({ ref }: { ref?: Ref<Graph3DHandle> }) {
   const { theme } = useResolvedTheme();
 
   // Intro animation - owned by Graph3D, values passed to children
-  const { values: introAnimation, setProgress: setIntroProgress } = useIntroAnimation();
+  const { values: introAnimation } = useIntroAnimation();
 
   // Store canvas reference for export
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -412,11 +407,12 @@ export function Graph3D({ ref }: { ref?: Ref<Graph3DHandle> }) {
             baseCameraDistance={baseCameraDistance}
             onZoomChange={handleZoomChange}
             onPanChange={handlePanChange}
-            onIntroProgress={setIntroProgress}
           />
 
           {/* Lighting setup for polished look */}
-          <ambientLight intensity={0.7} />
+          <ambientLight intensity={0.65} />
+          {/* Hemisphere light for natural ambient sky/ground reflections (100% offline & fast) */}
+          <hemisphereLight args={["#ffffff", "#334155", 0.65]} />
           {/* Key light - main illumination from top-right-front */}
           <directionalLight
             position={[100, 200, 150]}
@@ -426,7 +422,7 @@ export function Graph3D({ ref }: { ref?: Ref<Graph3DHandle> }) {
           {/* Fill light - softer from left side */}
           <directionalLight
             position={[-150, 50, 100]}
-            intensity={0.4}
+            intensity={0.5}
             color={LIGHT_COLORS.fill}
           />
           {/* Rim light - from behind for edge definition */}
@@ -435,11 +431,6 @@ export function Graph3D({ ref }: { ref?: Ref<Graph3DHandle> }) {
             intensity={0.6}
             color={LIGHT_COLORS.rim}
           />
-
-          {/* Environment map for subtle reflections */}
-          <Suspense fallback={null}>
-            <Environment preset="city" environmentIntensity={0.3} />
-          </Suspense>
 
           {/* Grid - fixed at origin (large enough to cover any view) */}
           <Grid

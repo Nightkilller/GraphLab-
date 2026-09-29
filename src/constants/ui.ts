@@ -5,9 +5,9 @@
 
 // Zoom configuration
 export const ZOOM = {
-  MIN: 0.5,
-  MAX: 2,
-  STEP: 0.25,
+  MIN: 0.15,
+  MAX: 4,
+  STEP: 0.15,
 } as const;
 
 // Drag detection threshold (pixels)

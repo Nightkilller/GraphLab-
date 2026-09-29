@@ -37,7 +37,7 @@ function computeValues(progress: number): IntroAnimationValues {
 
 // Hook for intro animation - only use once in Graph3D (inside Canvas)
 export function useIntroAnimation() {
-  const [progress, setProgressState] = useState(0);
+  const [progress, setProgressState] = useState(1);
   const values = computeValues(progress);
 
   const setProgress = useCallback((p: number) => {

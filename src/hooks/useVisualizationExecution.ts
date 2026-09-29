@@ -39,7 +39,7 @@ export function useVisualizationExecution(): UseVisualizationExecutionReturn {
     const { id, name } = currentAlgorithm.metadata;
 
     if (ALGORITHMS_NO_NEGATIVE_WEIGHTS.has(id) && hasNegativeWeights(data.edges)) {
-      toast.warning(`${name} doesn't support negative edge weights. Use Bellman-Ford instead.`);
+      toast.warning(`${name} doesn't support negative edge weights. Please use non-negative weights.`);
       resetVisualization();
       return;
     }

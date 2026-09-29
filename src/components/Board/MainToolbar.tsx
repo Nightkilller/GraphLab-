@@ -39,6 +39,8 @@ import { SpeedControl } from "./SpeedControl";
 import { ModeToggle } from "./ModeToggle";
 import { Toolbar, ToolbarButton, ToolbarSeparator } from "../ui/toolbar";
 import { cn } from "../../lib/utils";
+import { useGraphActions } from "../../hooks/useGraphActions";
+import { ZoomControls } from "./ZoomControls";
 
 interface MainToolbarProps {
   graphRendererRef: RefObject<GraphRendererHandle | null>;
@@ -68,6 +70,7 @@ export function MainToolbar({ graphRendererRef }: MainToolbarProps) {
   const isVisualizing = visualizationState === VisualizationState.RUNNING;
   const is3DMode = renderMode === "3d";
   const isDesktop = useIsDesktop();
+  const execute = useGraphActions();
 
   const handleAlgoChange = (algoId: string) => {
     const algo = algorithmRegistry.get(algoId);
@@ -296,6 +299,17 @@ export function MainToolbar({ graphRendererRef }: MainToolbarProps) {
             </SelectItem>
           </SelectContent>
         </Select>
+
+        {isDesktop && (
+          <>
+            <ToolbarSeparator className="mx-0.5 shrink-0" />
+            <ZoomControls
+              onZoomIn={execute.zoomIn}
+              onZoomOut={execute.zoomOut}
+              onZoomReset={execute.resetZoom}
+            />
+          </>
+        )}
 
         {/* Export — direct button in 3D mode, dropdown in 2D mode */}
         {is3DMode ? (

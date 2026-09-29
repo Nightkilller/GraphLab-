@@ -21,7 +21,7 @@ export const meta = {
     faq: [
       { question: "What is Dijkstra's algorithm?", answer: "Dijkstra's algorithm is a greedy graph algorithm that finds the shortest path from a single source node to all other nodes in a weighted graph with non-negative edge weights. It works by repeatedly selecting the unvisited node with the smallest known distance and updating its neighbors." },
       { question: "What is the time complexity of Dijkstra's algorithm?", answer: "With a binary heap priority queue, Dijkstra's algorithm runs in O((V + E) log V) time, where V is the number of vertices and E is the number of edges. Using a Fibonacci heap improves this to O(E + V log V)." },
-      { question: "Can Dijkstra's algorithm handle negative edge weights?", answer: "No. Dijkstra's algorithm requires all edge weights to be non-negative. For graphs with negative weights, use the Bellman-Ford algorithm instead, which can also detect negative-weight cycles." },
+      { question: "Can Dijkstra's algorithm handle negative edge weights?", answer: "No. Dijkstra's algorithm requires all edge weights to be non-negative because it assumes once a node is visited, its shortest distance is finalized." },
       { question: "What is the difference between Dijkstra's and BFS?", answer: "BFS finds the shortest path in unweighted graphs by exploring level by level. Dijkstra's generalizes this to weighted graphs by using a priority queue to always process the closest unvisited node, accounting for varying edge costs." },
     ],
   }),
@@ -50,7 +50,7 @@ export default function DijkstraPage() {
       }}
       properties={[
         { icon: Timer, title: "Time Complexity", description: "O((V + E) log V) with a binary heap priority queue, where V is vertices and E is edges." },
-        { icon: Scale, title: "Weighted Graphs", description: "Designed for graphs with non-negative edge weights. For negative weights, use Bellman-Ford instead." },
+        { icon: Scale, title: "Weighted Graphs", description: "Designed for graphs with non-negative edge weights." },
         { icon: Route, title: "Optimal Paths", description: "Guarantees the shortest path between the source and every reachable node in the graph." },
         { icon: Network, title: "Greedy Strategy", description: "Always processes the closest unvisited node first, building up shortest paths incrementally." },
       ]}
@@ -62,7 +62,7 @@ export default function DijkstraPage() {
       faq={[
         { question: "What is Dijkstra's algorithm?", answer: "Dijkstra's algorithm is a greedy graph algorithm that finds the shortest path from a single source node to all other nodes in a weighted graph with non-negative edge weights. It works by repeatedly selecting the unvisited node with the smallest known distance and updating its neighbors." },
         { question: "What is the time complexity of Dijkstra's algorithm?", answer: "With a binary heap priority queue, Dijkstra's algorithm runs in O((V + E) log V) time, where V is the number of vertices and E is the number of edges. Using a Fibonacci heap improves this to O(E + V log V)." },
-        { question: "Can Dijkstra's algorithm handle negative edge weights?", answer: "No. Dijkstra's algorithm requires all edge weights to be non-negative. For graphs with negative weights, use the Bellman-Ford algorithm instead, which can also detect negative-weight cycles." },
+        { question: "Can Dijkstra's algorithm handle negative edge weights?", answer: "No. Dijkstra's algorithm requires all edge weights to be non-negative because it assumes once a node is visited, its shortest distance is finalized." },
         { question: "What is the difference between Dijkstra's and BFS?", answer: "BFS finds the shortest path in unweighted graphs by exploring level by level. Dijkstra's generalizes this to weighted graphs by using a priority queue to always process the closest unvisited node, accounting for varying edge costs." },
       ]}
     />

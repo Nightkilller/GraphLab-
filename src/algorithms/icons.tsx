@@ -56,26 +56,6 @@ export const DijkstraIcon = ({ className }: IconProps) => (
   </svg>
 );
 
-/** Bellman-Ford: Checks all edges each iteration */
-export const BellmanFordIcon = ({ className }: IconProps) => (
-  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-    {/* Nodes */}
-    <circle cx="4" cy="6" r="2" fill="currentColor" />
-    <circle cx="20" cy="6" r="2" />
-    <circle cx="4" cy="18" r="2" />
-    <circle cx="20" cy="18" r="2" />
-    <circle cx="12" cy="12" r="2" />
-    {/* All edges visible - representing checking every edge */}
-    <path d="M6 6 L10 10" />
-    <path d="M14 10 L18 6" />
-    <path d="M6 18 L10 14" />
-    <path d="M14 14 L18 18" />
-    <path d="M4 8 L4 16" />
-    <path d="M20 8 L20 16" />
-    <path d="M6 6 L18 6" />
-    <path d="M6 18 L18 18" />
-  </svg>
-);
 
 /** Prim's MST: Minimum spanning tree */
 export const PrimsIcon = ({ className }: IconProps) => (

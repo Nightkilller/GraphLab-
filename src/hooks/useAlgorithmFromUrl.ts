@@ -9,7 +9,6 @@ import {
 
 const graphForAlgorithm: Record<string, () => GeneratedGraph> = {
   "dijkstra": generateWeighted,
-  "bellman-ford": generateWeighted,
 };
 
 /**

@@ -15,18 +15,24 @@ const Graph3D = lazy(() =>
 );
 
 // Fallback component for 3D rendering errors
-function Graph3DErrorFallback() {
+function Graph3DErrorFallback({ error, resetErrorBoundary }: FallbackProps) {
   const setRenderMode = useSettingsStore((state) => state.setRenderMode);
+  const errorMessage = error instanceof Error ? error.message : String(error || "An unexpected error occurred in 3D mode.");
   return (
-    <div className="flex flex-col items-center justify-center h-full gap-4 p-8 text-center">
+    <div className="flex flex-col items-center justify-center h-full gap-4 p-8 text-center bg-(--color-paper)">
       <AlertTriangle className="w-12 h-12 text-(--color-error)" />
-      <h2 className="text-lg font-semibold">3D rendering failed</h2>
-      <p className="text-sm text-(--color-text-muted)">
-        There was a problem with the 3D view
+      <h2 className="text-lg font-semibold text-(--color-text)">3D rendering failed</h2>
+      <p className="text-sm text-(--color-text-muted) max-w-sm">
+        {errorMessage}
       </p>
-      <Button onClick={() => setRenderMode('svg')} variant="secondary">
-        Switch to standard view
-      </Button>
+      <div className="flex items-center gap-2">
+        <Button onClick={resetErrorBoundary} variant="secondary">
+          Try Again
+        </Button>
+        <Button onClick={() => setRenderMode('svg')} variant="default">
+          Switch to standard view
+        </Button>
+      </div>
     </div>
   );
 }

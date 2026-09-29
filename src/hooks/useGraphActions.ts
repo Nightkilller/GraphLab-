@@ -65,12 +65,14 @@ export function useGraphActions() {
 
   const zoomIn = useCallback(() => {
     const s = useGraphStore.getState();
-    s.setViewportZoom(Math.min(s.viewport.zoom + ZOOM.STEP, ZOOM.MAX));
+    const next = Math.min(Math.round((s.viewport.zoom + ZOOM.STEP) * 100) / 100, ZOOM.MAX);
+    s.setViewportZoom(next);
   }, []);
 
   const zoomOut = useCallback(() => {
     const s = useGraphStore.getState();
-    s.setViewportZoom(Math.max(s.viewport.zoom - ZOOM.STEP, ZOOM.MIN));
+    const next = Math.max(Math.round((s.viewport.zoom - ZOOM.STEP) * 100) / 100, ZOOM.MIN);
+    s.setViewportZoom(next);
   }, []);
 
   const resetZoom = useCallback(() => {
