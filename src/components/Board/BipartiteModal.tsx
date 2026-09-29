@@ -363,7 +363,7 @@ export const BipartiteModal = ({ disabled }: BipartiteModalProps) => {
                   </span>
                 </div>
                 <span className="text-[11px] font-mono text-(--color-text-muted)">
-                  Max Edges: {setsResult.maxPossibleEdges} (K_{n1},{n2})
+                  Max Edges: {setsResult.maxPossibleEdges} (K<sub>{n1},{n2}</sub>)
                 </span>
               </div>
 

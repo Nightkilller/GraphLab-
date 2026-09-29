@@ -279,7 +279,7 @@ export const IsomorphismModal = ({ disabled }: IsomorphismModalProps) => {
               <Shuffle className="w-4 h-4" />
             </div>
             <div>
-              <h3 className="font-bold text-sm text-(--color-text)">Graph Isomorphism ($G_1 \cong G_2$)</h3>
+              <h3 className="font-bold text-sm text-(--color-text)">Graph Isomorphism (G₁ ≅ G₂)</h3>
               <p className="text-[10px] text-(--color-text-muted)">Multi-Graph Canvas Detection & Invariant Checker</p>
             </div>
           </div>
@@ -344,7 +344,7 @@ export const IsomorphismModal = ({ disabled }: IsomorphismModalProps) => {
                     <Info className="w-4 h-4 shrink-0 mt-0.5" />
                     <div>
                       <p className="font-semibold">Only 1 graph detected on canvas ({components[0].nodes.length} vertices, {countUniqueEdges(components[0].edges)} edges).</p>
-                      <p className="opacity-90">Isomorphism testing requires two separate graphs ($G_1$ and $G_2$) to compare.</p>
+                      <p className="opacity-90">Isomorphism testing requires two separate graphs (G₁ and G₂) to compare.</p>
                     </div>
                   </div>
 
@@ -488,12 +488,12 @@ export const IsomorphismModal = ({ disabled }: IsomorphismModalProps) => {
                     {checkResult.isIsomorphic ? (
                       <>
                         <Check className="w-4 h-4" />
-                        <span>ISOMORPHIC ($G_1 \cong G_2$)</span>
+                        <span>ISOMORPHIC (G₁ ≅ G₂)</span>
                       </>
                     ) : (
                       <>
                         <AlertCircle className="w-4 h-4" />
-                        <span>NOT ISOMORPHIC ($G_1 \not\cong G_2$)</span>
+                        <span>NOT ISOMORPHIC (G₁ ≇ G₂)</span>
                       </>
                     )}
                   </div>
@@ -573,7 +573,7 @@ export const IsomorphismModal = ({ disabled }: IsomorphismModalProps) => {
             {isoResult && (
               <div className="p-3 rounded-xl bg-(--color-paper)/80 border border-(--color-divider) space-y-2 text-xs">
                 <div className="font-bold text-xs text-(--color-accent) flex items-center justify-between">
-                  <span>Isomorphic Bijection Mapping ($\pi: V \to V'$)</span>
+                  <span>Isomorphic Bijection Mapping (π: V → V′)</span>
                   <span className="text-[10px] text-(--color-text-muted)">{isoResult.mappingDisplay.length} vertices</span>
                 </div>
 

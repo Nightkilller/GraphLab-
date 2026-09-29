@@ -206,7 +206,7 @@ export const ComplementModal = ({ disabled }: ComplementModalProps) => {
                       |E(G)| + |E(G')| = C(n, 2) = {analysis?.origEdgeCount ?? 0} + {analysis?.compEdgeCount ?? 0} = {maxEdges}
                     </p>
                     <p className="text-[10.5px] text-(--color-text-muted)">
-                      The edges of graph G and complement G' partition the complete graph K_{n}.
+                      The edges of graph G and complement G' partition the complete graph K<sub>{n}</sub>.
                     </p>
                   </div>
 

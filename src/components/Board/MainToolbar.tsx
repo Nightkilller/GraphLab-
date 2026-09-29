@@ -20,7 +20,6 @@ import { DegreeSequenceModal } from "./DegreeSequenceModal";
 import { IsomorphismModal } from "./IsomorphismModal";
 import { ComplementModal } from "./ComplementModal";
 import { BipartiteModal } from "./BipartiteModal";
-import { SpanningTreeModal } from "./SpanningTreeModal";
 import { EdgeVisibilityToggle } from "./EdgeVisibilityToggle";
 import { MatrixModal } from "./MatrixModal";
 import { toast } from "sonner";
@@ -220,7 +219,6 @@ export function MainToolbar({ graphRendererRef }: MainToolbarProps) {
         <IsomorphismModal disabled={isVisualizing} />
         <ComplementModal disabled={isVisualizing} />
         <BipartiteModal disabled={isVisualizing} />
-        <SpanningTreeModal disabled={isVisualizing} />
         <MatrixModal disabled={isVisualizing} />
         <EdgeVisibilityToggle disabled={!hasNodes} />
       </div>
