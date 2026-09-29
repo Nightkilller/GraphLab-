@@ -31,15 +31,23 @@ function* dijkstraGenerator(input: AlgorithmInput): AlgorithmGenerator {
 
   // Handle same start and end
   if (startNodeId === endNodeId) {
+    const selfMsg = `**Shortest Path**: **${nid(startNodeId)}**\n**Minimum Length**: **0**`;
     yield {
       type: StepType.VISIT,
       edge: { from: -1, to: startNodeId },
       trace: {
-        message: `**Start and destination are the same** (node ${nid(startNodeId)})`,
+        message: `**Start and destination are the same**\n${selfMsg}`,
         dataStructure: { type: "priority-queue", items: [], processing: { id: startNodeId, value: 0 } },
       },
     };
-    yield { type: StepType.RESULT, edge: { from: -1, to: startNodeId } };
+    yield {
+      type: StepType.RESULT,
+      edge: { from: -1, to: startNodeId },
+      trace: {
+        message: selfMsg,
+        dataStructure: { type: "priority-queue", items: [], processing: { id: startNodeId, value: 0 } },
+      },
+    };
     return;
   }
 
@@ -158,11 +166,16 @@ function* dijkstraGenerator(input: AlgorithmInput): AlgorithmGenerator {
     // Found the target
     if (currentNode === endNodeId) {
       const prevNode = previous.get(currentNode);
+      const totalLength = distances.get(endNodeId) ?? minDistance;
+      const { path: resultEdges, nodeOrder } = reconstructPath(previous, startNodeId, endNodeId);
+      const pathString = nodeOrder.map(nid).join(" → ");
+      const finalMsg = `**Shortest Path**: **${pathString}**\n**Minimum Length**: **${totalLength}**`;
+
       yield {
         type: StepType.VISIT,
         edge: { from: prevNode ?? -1, to: currentNode },
         trace: {
-          message: `**Found destination node ${nid(currentNode)}!**`,
+          message: `**Destination reached!**\n${finalMsg}`,
           dataStructure: {
             type: "priority-queue",
             items: getPriorityQueueState(),
@@ -171,9 +184,19 @@ function* dijkstraGenerator(input: AlgorithmInput): AlgorithmGenerator {
         },
       };
 
-      const resultEdges = reconstructPath(previous, startNodeId, endNodeId);
       for (const edge of resultEdges) {
-        yield { type: StepType.RESULT, edge };
+        yield {
+          type: StepType.RESULT,
+          edge,
+          trace: {
+            message: finalMsg,
+            dataStructure: {
+              type: "priority-queue",
+              items: [],
+              processing: { id: endNodeId, value: totalLength },
+            },
+          },
+        };
       }
       return;
     }
@@ -208,7 +231,7 @@ function reconstructPath(
   previous: Map<number, number>,
   startNodeId: number,
   endNodeId: number
-): EdgeRef[] {
+): { path: EdgeRef[]; nodeOrder: number[] } {
   const path: EdgeRef[] = [];
   let current: number | undefined = endNodeId;
 
@@ -225,7 +248,7 @@ function reconstructPath(
     path.push({ from: nodeOrder[i], to: nodeOrder[i + 1] });
   }
 
-  return path;
+  return { path, nodeOrder };
 }
 
 const dijkstraAdapter: AlgorithmAdapter = {

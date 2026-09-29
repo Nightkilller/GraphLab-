@@ -1,3 +1,4 @@
+import { toast } from "sonner";
 import { useEffect } from "react";
 import { useGraphStore, selectIsPlaying } from "../store/graphStore";
 import { VisualizationMode } from "../constants/visualization";
@@ -23,6 +24,17 @@ export function useAutoPlay(): void {
       if (step.index < step.history.length - 1) {
         store.stepForward();
       } else if (mode === VisualizationMode.AUTO) {
+        const lastStep = step.history[step.history.length - 1];
+        if (lastStep?.trace?.message) {
+          const raw = lastStep.trace.message;
+          const clean = raw
+            .replace(/\{n:(\d+)\}/g, (_, id) => {
+              const n = store.data.nodes.find((node) => node.id === parseInt(id, 10));
+              return n?.label || id;
+            })
+            .replace(/\*\*/g, "");
+          toast.success(clean, { duration: 6000 });
+        }
         store.finishVisualization();
       } else {
         store.stopAutoPlay();

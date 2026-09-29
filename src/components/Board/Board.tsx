@@ -150,9 +150,9 @@ export const Board = () => {
         {/* Complement Inspector floating comparison toolbar */}
         <ComplementInspector />
 
-        {/* Trace Panel - Desktop only, bottom center, hidden during RESULT steps */}
+        {/* Trace Panel - Desktop only, bottom center */}
         <AnimatePresence>
-          {isInStepMode && tracePanelVisible && stepIndex >= 0 && stepHistory[stepIndex]?.trace && (
+          {(isInStepMode || isVisualizing) && tracePanelVisible && stepIndex >= 0 && stepHistory[stepIndex]?.trace && (
             <TracePanel
               trace={stepHistory[stepIndex].trace}
               onCollapse={() => setTracePanelVisible(false)}

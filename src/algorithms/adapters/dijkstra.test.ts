@@ -146,5 +146,11 @@ describe('Dijkstra Algorithm', () => {
     // Shortest path: 1 -> 2 -> 4 (weight 3) vs 1 -> 3 -> 4 (weight 5)
     const pathNodes = resultEdges(result).map(e => e.to)
     expect(pathNodes).toEqual([1, 2, 4])
+
+    // Verify trace message includes Shortest Path and Minimum Length
+    const lastStep = result.steps[result.steps.length - 1]
+    expect(lastStep.trace?.message).toContain('Shortest Path')
+    expect(lastStep.trace?.message).toContain('Minimum Length')
+    expect(lastStep.trace?.message).toContain('3')
   })
 })

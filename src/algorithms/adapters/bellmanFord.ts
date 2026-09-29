@@ -149,9 +149,24 @@ function* bellmanFordGenerator(input: AlgorithmInput): AlgorithmGenerator {
   }
 
   // Reconstruct and yield result path
-  const resultEdges = reconstructPath(previous, startNodeId, endNodeId);
+  const { path: resultEdges, nodeOrder } = reconstructPath(previous, startNodeId, endNodeId);
+  const totalLength = distances.get(endNodeId) ?? 0;
+  const pathString = nodeOrder.map(nid).join(" → ");
+  const finalMsg = `**Shortest Path**: **${pathString}**\n**Minimum Length**: **${totalLength}**`;
+
   for (const edge of resultEdges) {
-    yield { type: StepType.RESULT, edge };
+    yield {
+      type: StepType.RESULT,
+      edge,
+      trace: {
+        message: finalMsg,
+        dataStructure: {
+          type: "distances",
+          items: [],
+          processing: { id: endNodeId, value: totalLength },
+        },
+      },
+    };
   }
 }
 
@@ -162,7 +177,7 @@ function reconstructPath(
   previous: Map<number, number>,
   startNodeId: number,
   endNodeId: number
-): EdgeRef[] {
+): { path: EdgeRef[]; nodeOrder: number[] } {
   const path: EdgeRef[] = [];
   let current: number | undefined = endNodeId;
 
@@ -175,7 +190,7 @@ function reconstructPath(
 
   // Verify path starts from startNode
   if (nodeOrder.length === 0 || nodeOrder[0] !== startNodeId) {
-    return [];
+    return { path: [], nodeOrder: [] };
   }
 
   // Convert to edges
@@ -184,7 +199,7 @@ function reconstructPath(
     path.push({ from: nodeOrder[i], to: nodeOrder[i + 1] });
   }
 
-  return path;
+  return { path, nodeOrder };
 }
 
 const bellmanFordAdapter: AlgorithmAdapter = {
