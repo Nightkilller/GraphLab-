@@ -21,7 +21,6 @@ import { IsomorphismModal } from "./IsomorphismModal";
 import { ComplementModal } from "./ComplementModal";
 import { BipartiteModal } from "./BipartiteModal";
 import { SpanningTreeModal } from "./SpanningTreeModal";
-import { AITutorPanel } from "./AITutorPanel";
 import { EdgeVisibilityToggle } from "./EdgeVisibilityToggle";
 import { MatrixModal } from "./MatrixModal";
 import { toast } from "sonner";
@@ -224,7 +223,6 @@ export function MainToolbar({ graphRendererRef }: MainToolbarProps) {
         <SpanningTreeModal disabled={isVisualizing} />
         <MatrixModal disabled={isVisualizing} />
         <EdgeVisibilityToggle disabled={!hasNodes} />
-        <AITutorPanel disabled={isVisualizing} />
       </div>
 
       {isDesktop && <ToolbarSeparator className="mx-0.5 shrink-0" />}
