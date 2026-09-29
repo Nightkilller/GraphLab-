@@ -918,7 +918,7 @@ export const useGraphStore = create<GraphStore>()(
           set({
             data: { ...data, textBoxes: updatedTextBoxes },
             selection: { ...get().selection, textBoxId: newId, textBoxIds: new Set([newId]), nodeIds: new Set() },
-            editingTextBoxId: newId,
+            editingTextBoxId: box?.text ? null : newId,
           });
           return newId;
         }),

@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { useIsDesktop } from "../../hooks/useMediaQuery";
 import { GraphRenderer, type GraphRendererHandle } from "../GraphRenderer";
 import { cn } from "@/lib/utils";
@@ -14,6 +14,7 @@ import { TIMING } from "../../constants/ui";
 import { useAlgorithmFromUrl } from "../../hooks/useAlgorithmFromUrl";
 import { VisualizationState } from "../../constants/visualization";
 import { GrainTexture } from "../ui/grain-texture";
+import { writeShortestPathAnnotation } from "../../utils/graph/pathAnnotation";
 
 import { MainToolbar } from "./MainToolbar";
 import { TextToolBar } from "./TextToolBar";
@@ -58,6 +59,12 @@ export const Board = () => {
 
   useAutoPlay();
   useAlgorithmFromUrl();
+
+  useEffect(() => {
+    if (stepIndex >= 0 && stepHistory.length > 0 && stepIndex === stepHistory.length - 1) {
+      writeShortestPathAnnotation(stepHistory);
+    }
+  }, [stepIndex, stepHistory]);
 
   const execute = useGraphActions();
   useGraphKeyboardShortcuts(execute.handleKeyDown);

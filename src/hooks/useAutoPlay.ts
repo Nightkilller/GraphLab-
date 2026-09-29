@@ -2,6 +2,7 @@ import { toast } from "sonner";
 import { useEffect } from "react";
 import { useGraphStore, selectIsPlaying } from "../store/graphStore";
 import { VisualizationMode } from "../constants/visualization";
+import { writeShortestPathAnnotation } from "../utils/graph/pathAnnotation";
 
 /**
  * Advances the current run one step per `speed` ms while it is playing.
@@ -35,6 +36,8 @@ export function useAutoPlay(): void {
             .replace(/\*\*/g, "");
           toast.success(clean, { duration: 6000 });
         }
+        // Write shortest path annotation directly to canvas
+        writeShortestPathAnnotation(step.history);
         store.finishVisualization();
       } else {
         store.stopAutoPlay();
