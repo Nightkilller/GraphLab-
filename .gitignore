@@ -121,3 +121,9 @@ dist
 
 # Office temp files
 ~$*
+
+# Pen drive portable copy
+GraphLab_PenDrive/
+
+# Generated docs
+docs_diagrams/
