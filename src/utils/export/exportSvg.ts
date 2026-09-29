@@ -225,7 +225,7 @@ function resolveCSSVariables(svg: SVGSVGElement, cssValues: Record<string, strin
  * Add background color to the SVG for proper rendering in standalone viewers
  */
 function addBackground(svg: SVGSVGElement, cssValues: Record<string, string>): void {
-  const paperColor = cssValues['--color-paper'] || '#e5e0d8';
+  const paperColor = cssValues['--color-paper'] || '#f8fafc';
 
   // Get viewBox dimensions to size the background
   const viewBox = svg.getAttribute('viewBox');

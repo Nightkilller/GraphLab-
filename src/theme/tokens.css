@@ -7,115 +7,118 @@
  * To add a theme: copy a block, change the selector, and adjust values.
  */
 
-:root {
+:root,
+[data-theme="light"] {
   /* Fonts */
   --font-sans: "Outfit", system-ui, sans-serif;
 
   /* === PHYSICAL SURFACE PALETTE === */
 
-  /* Paper background - warm, textured feel */
-  --color-paper: #e5e0d8;
+  /* Paper background - bright, crisp, clean canvas */
+  --color-paper: #f8fafc;
 
-  /* Surface - light like nodes */
-  --color-surface: #f1eee9;
-  --color-surface-hover: #f8f6f2;
+  /* Surface - pure crisp white for cards and floating toolbars */
+  --color-surface: #ffffff;
+  --color-surface-hover: #f1f5f9;
 
   /* Text */
-  --color-text: #2a2520;
-  --color-text-muted: #5a544c;
+  --color-text: #0f172a;
+  --color-text-muted: #64748b;
 
-  /* Single accent - only one visible at a time */
-  --color-accent: #4aaa4a;
-  --color-accent-pressed: #3a943a;
-  --color-error: #d96850;
+  /* Single accent - vibrant modern emerald */
+  --color-accent: #10b981;
+  --color-accent-pressed: #059669;
+  --color-error: #ef4444;
 
   /* Node state tints (used for strokes) */
-  --color-tint-visited: #5a9a5a;
-  --color-tint-path: #b08030;
-  --color-tint-start: #4090b8;
-  --color-tint-end: #c06048;
-  --color-tint-cycle: #d86850;
+  --color-tint-visited: #10b981;
+  --color-tint-path: #f59e0b;
+  --color-tint-start: #0ea5e9;
+  --color-tint-end: #f43f5e;
+  --color-tint-cycle: #ef4444;
 
-  /* === SHADOW SYSTEM (Flat Paper Aesthetic) === */
+  /* === SHADOW SYSTEM (Clean Modern Aesthetic) === */
 
   --shadow-raised:
-    0px 0px 0px 1px rgba(50, 45, 40, 0.2);
+    0px 1px 3px rgba(15, 23, 42, 0.08),
+    0px 1px 2px rgba(15, 23, 42, 0.04);
 
   --shadow-raised-lg:
-    0px 0px 0px 1px rgba(50, 45, 40, 0.2),
-    0px 3px 2px rgba(50, 45, 40, 0.03);
+    0px 4px 6px -1px rgba(15, 23, 42, 0.08),
+    0px 2px 4px -2px rgba(15, 23, 42, 0.05);
 
   --highlight-edge:
-    inset 0px 1px 0px rgba(255, 255, 255, 0.5);
+    inset 0px 1px 0px rgba(255, 255, 255, 0.9);
 
   --shadow-pressed:
-    inset 0px 2px 4px rgba(50, 45, 40, 0.15);
+    inset 0px 2px 4px rgba(15, 23, 42, 0.08);
 
   --shadow-etched:
-    inset 0px 1px 3px rgba(50, 45, 40, 0.12);
+    inset 0px 1px 2px rgba(15, 23, 42, 0.06);
 
   --shadow-premium:
-    0px 0px 0px 1px rgba(50, 45, 40, 0.2);
+    0px 1px 3px 0px rgba(15, 23, 42, 0.08),
+    0px 0px 0px 1px rgba(15, 23, 42, 0.06);
 
-  /* Node gradient colors - flat for minimal 2D look */
-  --gradient-default-start: #e8e3db;
-  --gradient-default-mid: #e8e3db;
-  --gradient-default-end: #e8e3db;
+  /* Node gradient colors - bright white fill with clean definition */
+  --gradient-default-start: #ffffff;
+  --gradient-default-mid: #ffffff;
+  --gradient-default-end: #ffffff;
 
-  --gradient-visited-start: #a0d4a0;
-  --gradient-visited-mid: #a0d4a0;
-  --gradient-visited-end: #a0d4a0;
+  --gradient-visited-start: #bbf7d0;
+  --gradient-visited-mid: #bbf7d0;
+  --gradient-visited-end: #bbf7d0;
 
-  --gradient-path-start: #e4c890;
-  --gradient-path-mid: #e4c890;
-  --gradient-path-end: #e4c890;
+  --gradient-path-start: #fef08a;
+  --gradient-path-mid: #fef08a;
+  --gradient-path-end: #fef08a;
 
-  --gradient-start-start: #90c8e0;
-  --gradient-start-mid: #90c8e0;
-  --gradient-start-end: #90c8e0;
+  --gradient-start-start: #bae6fd;
+  --gradient-start-mid: #bae6fd;
+  --gradient-start-end: #bae6fd;
 
-  --gradient-end-start: #e4a088;
-  --gradient-end-mid: #e4a088;
-  --gradient-end-end: #e4a088;
+  --gradient-end-start: #fecdd3;
+  --gradient-end-mid: #fecdd3;
+  --gradient-end-end: #fecdd3;
 
-  --gradient-cycle-start: #e8a090;
-  --gradient-cycle-mid: #e8a090;
-  --gradient-cycle-end: #e8a090;
+  --gradient-cycle-start: #fecaca;
+  --gradient-cycle-mid: #fecaca;
+  --gradient-cycle-end: #fecaca;
 
-  /* Edge colors */
-  --color-edge-default: rgba(50, 45, 40, 0.45);
-  --color-edge-traversal: #4a9a4a;
-  --color-edge-path: #b89040;
-  --color-edge-cycle: #d86850;
+  /* Edge colors - clean slate */
+  --color-edge-default: rgba(100, 116, 139, 0.45);
+  --color-edge-traversal: #10b981;
+  --color-edge-path: #f59e0b;
+  --color-edge-cycle: #ef4444;
 
   /* Arrow colors (slightly darker than edges for differentiation) */
-  --color-arrow-traversal: #429242;
-  --color-arrow-path: #a88038;
-  --color-arrow-cycle: #c85840;
+  --color-arrow-traversal: #059669;
+  --color-arrow-path: #d97706;
+  --color-arrow-cycle: #dc2626;
 
-  /* Node drop shadow - none for flat design */
-  --node-shadow-color: transparent;
+  /* Node drop shadow */
+  --node-shadow-color: rgba(15, 23, 42, 0.06);
 
   /* Node stroke */
-  --color-node-stroke: #8a847a;
+  --color-node-stroke: #94a3b8;
 
   /* Interactive states (for hover on items) */
-  --color-interactive-hover: rgba(50, 45, 40, 0.12);
-  --color-slider-range: rgba(50, 45, 40, 0.22);
+  --color-interactive-hover: rgba(15, 23, 42, 0.05);
+  --color-slider-range: rgba(15, 23, 42, 0.15);
 
   /* Divider */
-  --color-divider: rgba(50, 45, 40, 0.18);
+  --color-divider: rgba(15, 23, 42, 0.08);
 
-  /* Form control accent (warm orange) */
-  --color-accent-form: #d86840;
-  --color-accent-form-glow: rgba(224, 120, 80, 0.4);
+  /* Form control accent */
+  --color-accent-form: #f97316;
+  --color-accent-form-glow: rgba(249, 115, 22, 0.3);
 
   /* Graph paper grid */
-  --color-grid-line: rgba(50, 45, 40, 0.08);
-  --color-grid-line-major: rgba(50, 45, 40, 0.15);
+  --color-grid-line: rgba(15, 23, 42, 0.05);
+  --color-grid-line-major: rgba(15, 23, 42, 0.1);
 
-  /* Grain texture opacity */
-  --grain-opacity: 0.15;
+  /* Grain texture opacity - minimal for bright, pristine look */
+  --grain-opacity: 0.03;
 
   /* Focus ring animation */
   --focus-ring-width: 3px;
