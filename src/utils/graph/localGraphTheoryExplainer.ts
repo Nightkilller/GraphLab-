@@ -1,6 +1,7 @@
 import { GraphNode, GraphEdge } from "../../components/Graph/types";
 import { countUniqueEdges } from "./complementGraph";
 import { checkBipartite } from "./bipartite";
+import { analyzeGraphSpanningTrees } from "./spanningTree";
 
 export interface GraphSummaryInput {
   nodeCount: number;
@@ -107,6 +108,9 @@ export function generateLocalGraphTheoryExplanation(
   // Bipartite Analysis
   const bipartiteResult = checkBipartite(nodes, edges);
 
+  // Spanning Tree Analysis
+  const spanningTreeAnalysis = analyzeGraphSpanningTrees(nodes, edges);
+
   // Build the complete Markdown Report
   return `### 📊 Graph Theory Analysis (Local Engine — 100% Free & Unlimited)
 
@@ -140,7 +144,14 @@ ${isRegular ? `- **Regularity**: ${minDeg}-regular graph (all vertices have equa
 
 ---
 
-**5. Complement Graph (G')**
+**5. Spanning Tree & Minimum Spanning Tree (MST)**
+- **Total Spanning Trees $\\tau(G)$**: ${spanningTreeAnalysis.isConnected ? `**${spanningTreeAnalysis.spanningTreeCount.toLocaleString()}** (computed via Kirchhoff's Matrix-Tree Theorem: $\\det(L^*)$)` : "0 (Graph is disconnected; spanning trees require connectivity)"}
+${spanningTreeAnalysis.mst ? `- **Minimum Spanning Tree (MST)**: Total minimum weight = **${spanningTreeAnalysis.mst.totalWeight}** using ${spanningTreeAnalysis.mst.edgeCount} edges (${spanningTreeAnalysis.mst.edges.map(e => `${e.fromLabel}-${e.toLabel}`).join(", ")})` : ""}
+- **Tree Edge Requirement**: A tree spanning ${n} vertices requires exactly ${n > 0 ? n - 1 : 0} edges.
+
+---
+
+**6. Complement Graph (G')**
 - **Complement Edges**: |E(G')| = C(${n}, 2) - ${m} = ${compEdges} edges.
 - **Invariant**: |E(G)| + |E(G')| = ${maxEdges}.
 ${m === compEdges && n % 4 <= 1 ? `*(Potential self-complementary candidate since |E(G)| = |E(G')|)*` : ""}
