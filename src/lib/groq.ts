@@ -8,17 +8,11 @@ import { NODE, EDGE, EDGE_TYPE, type EdgeType } from "../constants/graph";
 import { calculateAccurateCoords } from "../utils/geometry/calc";
 import { type GeneratedGraph } from "../utils/graph/graphGenerator";
 
-// Safe runtime-decoded default key to protect against automated secret-scanner regexes in git
-const FALLBACK_OPENROUTER_KEY =
-  typeof atob !== "undefined"
-    ? atob("c2stb3ItdjEtMmQ2ZjVkMmNjZDFjOWRjZmU5YTliZGUyOWY5OTRkOWU5ZTBlMzI0NmY5NGVjZWY0OGU5MzBiMjc3MjQzZGY5Yg==")
-    : "";
-
 export const DEFAULT_GROQ_API_KEY =
+  (import.meta.env?.VITE_GROQ_API_KEY as string | undefined)?.trim() ||
   (import.meta.env?.VITE_AI_API_KEY as string | undefined)?.trim() ||
   (import.meta.env?.VITE_OPENROUTER_API_KEY as string | undefined)?.trim() ||
-  (import.meta.env?.VITE_GROQ_API_KEY as string | undefined)?.trim() ||
-  FALLBACK_OPENROUTER_KEY;
+  "";
 
 export type AIProvider = "openrouter" | "groq" | "openai" | "gemini";
 
@@ -87,16 +81,20 @@ export function getActiveKeyIndex(): number {
 }
 
 export const GROQ_VISION_MODELS = [
-  "openrouter/free",
+  "llama-3.2-11b-vision-preview",
+  "llama-3.2-90b-vision-preview",
   "qwen/qwen3.8-27b",
   "qwen/qwen3.6-27b",
+  "openrouter/free",
 ];
 
 export const GROQ_TEXT_MODELS = [
-  "openrouter/free",
+  "llama-3.3-70b-versatile",
+  "llama-3.1-8b-instant",
   "qwen/qwen3.8-27b",
   "groq/compound-mini",
   "qwen/qwen3.6-27b",
+  "openrouter/free",
   "meta-llama/llama-3.3-70b-instruct:free",
 ];
 
@@ -240,12 +238,19 @@ function getProviderConfig(apiKey: string): {
           "Content-Type": "application/json",
         },
         textModels: [
+          "llama-3.3-70b-versatile",
+          "llama-3.1-8b-instant",
           "qwen/qwen3.8-27b",
           "groq/compound-mini",
           "qwen/qwen3.6-27b",
           "openai/gpt-oss-120b",
         ],
-        visionModels: ["qwen/qwen3.8-27b", "qwen/qwen3.6-27b"],
+        visionModels: [
+          "llama-3.2-11b-vision-preview",
+          "llama-3.2-90b-vision-preview",
+          "qwen/qwen3.8-27b",
+          "qwen/qwen3.6-27b",
+        ],
         defaultTemp: 0.1,
       };
 
@@ -293,8 +298,13 @@ function getProviderConfig(apiKey: string): {
           "liquid/lfm-2.5-2.6b:free",
           "inclusionai/ling-3.0-flash-sante:free",
         ],
-        visionModels: ["openrouter/free"],
-        defaultTemp: 0.3,
+        visionModels: [
+          "openrouter/free",
+          "meta-llama/llama-3.2-11b-vision-instruct:free",
+          "google/gemini-2.0-flash-exp:free",
+          "qwen/qwen-2.5-vl-72b-instruct:free",
+        ],
+        defaultTemp: 0.2,
       };
   }
 }
@@ -355,7 +365,7 @@ async function executeGroqCall(
 export async function callAIAPI(messages: ChatMessage[], maxTokens = 900): Promise<string> {
   const apiKey = getGroqApiKey();
   if (!apiKey) {
-    throw new Error("No API key configured. Please paste your API key in settings.");
+    throw new Error("No API key configured. Please paste your API key in settings or use Offline Mode.");
   }
   const isVision = messages.some(
     (m) => Array.isArray(m.content) && m.content.some((c) => c.type === "image_url")
@@ -364,66 +374,27 @@ export async function callAIAPI(messages: ChatMessage[], maxTokens = 900): Promi
   const config = getProviderConfig(apiKey);
   const models = isVision ? config.visionModels : config.textModels;
 
+  let lastErrorMsg = "";
   for (const model of models) {
     try {
       return await executeGroqCall(apiKey, model, messages, maxTokens, 35000);
     } catch (err: any) {
-      console.warn(`[AI - ${config.provider}] ${model} failed:`, err?.message || err);
+      lastErrorMsg = err?.message || String(err);
+      console.warn(`[AI - ${config.provider}] ${model} failed:`, lastErrorMsg);
     }
   }
 
-  throw new Error("AI generation failed. Please check your network connection or verify your API key.");
+  throw new Error(`AI generation failed (${config.provider}): ${lastErrorMsg || "Check internet connection or API key."}`);
 }
 
 export const callGroqAPI = callAIAPI;
 
 /**
- * Parses an uploaded graph image into nodes and edges.
+ * Builds normalized graph nodes and edges from raw node/edge descriptors
  */
-export async function parseGraphFromImage(base64DataUrl: string): Promise<GeneratedGraph> {
-  const prompt = `/no_think
-You are an expert graph theory computer vision engine.
-Analyze the user's diagram/sketch of a graph.
-Identify all vertices (nodes) and all connections (edges).
-Return ONLY a valid JSON object matching this exact specification:
-{
-  "nodes": [
-    { "id": 1, "label": "A", "x": 100, "y": 100 },
-    { "id": 2, "label": "B", "x": 300, "y": 100 }
-  ],
-  "edges": [
-    { "from": 1, "to": 2, "directed": false, "weight": 1 }
-  ]
-}
-Rules:
-1. Detect ALL vertices and their labels (letters or numbers).
-2. Assign each vertex a unique integer id (1, 2, 3...).
-3. Detect ALL edges connecting vertices. In "edges", set "from" and "to" using the integer "id" of the connected vertices.
-4. Set "directed": true only if arrows are clearly visible, otherwise false.
-Do NOT include any explanation, markdown formatting, or thinking. Output ONLY the raw JSON object.`;
-
-  const messages: ChatMessage[] = [
-    {
-      role: "user",
-      content: [
-        { type: "text", text: prompt },
-        { type: "image_url", image_url: { url: base64DataUrl } },
-      ],
-    },
-  ];
-
-  const rawResponse = await callAIAPI(messages, 900);
-
-  let parsed: any;
-  try {
-    parsed = extractJsonFromText(rawResponse);
-  } catch (err) {
-    console.error("Failed to parse vision response:", rawResponse);
-    throw new Error("Could not parse graph structure from image. Please try a clearer sketch or photo.");
-  }
-
+export function buildGraphFromParsed(parsed: { nodes: any[]; edges?: any[] }): GeneratedGraph {
   if (!parsed.nodes || !Array.isArray(parsed.nodes) || parsed.nodes.length === 0) {
-    throw new Error("Could not detect any vertices in the image. Please upload a clearer diagram.");
+    throw new Error("Could not detect any vertices in the graph data.");
   }
 
   const rawNodes: any[] = parsed.nodes;
@@ -580,6 +551,132 @@ Do NOT include any explanation, markdown formatting, or thinking. Output ONLY th
     edges,
     nodeCounter: maxId + 1,
   };
+}
+
+/**
+ * Generates an offline fallback graph when internet is not available or API key is absent.
+ */
+export function parseGraphOffline(presetId?: string): GeneratedGraph {
+  switch (presetId) {
+    case "triangle":
+      return buildGraphFromParsed({
+        nodes: [
+          { id: 1, label: "A", x: 0, y: -110 },
+          { id: 2, label: "B", x: -120, y: 90 },
+          { id: 3, label: "C", x: 120, y: 90 },
+        ],
+        edges: [
+          { from: 1, to: 2 },
+          { from: 2, to: 3 },
+          { from: 3, to: 1 },
+        ],
+      });
+
+    case "star":
+      return buildGraphFromParsed({
+        nodes: [
+          { id: 1, label: "Hub", x: 0, y: 0 },
+          { id: 2, label: "A", x: 0, y: -130 },
+          { id: 3, label: "B", x: 130, y: -30 },
+          { id: 4, label: "C", x: 80, y: 120 },
+          { id: 5, label: "D", x: -80, y: 120 },
+          { id: 6, label: "E", x: -130, y: -30 },
+        ],
+        edges: [
+          { from: 1, to: 2 },
+          { from: 1, to: 3 },
+          { from: 1, to: 4 },
+          { from: 1, to: 5 },
+          { from: 1, to: 6 },
+        ],
+      });
+
+    case "cycle":
+      return buildGraphFromParsed({
+        nodes: [
+          { id: 1, label: "1", x: 0, y: -120 },
+          { id: 2, label: "2", x: 114, y: -37 },
+          { id: 3, label: "3", x: 70, y: 97 },
+          { id: 4, label: "4", x: -70, y: 97 },
+          { id: 5, label: "5", x: -114, y: -37 },
+        ],
+        edges: [
+          { from: 1, to: 2 },
+          { from: 2, to: 3 },
+          { from: 3, to: 4 },
+          { from: 4, to: 5 },
+          { from: 5, to: 1 },
+        ],
+      });
+
+    default:
+      // General offline planar graph (5 nodes, 6 edges)
+      return buildGraphFromParsed({
+        nodes: [
+          { id: 1, label: "A", x: 0, y: -120 },
+          { id: 2, label: "B", x: -110, y: -30 },
+          { id: 3, label: "C", x: 110, y: -30 },
+          { id: 4, label: "D", x: -110, y: 100 },
+          { id: 5, label: "E", x: 110, y: 100 },
+        ],
+        edges: [
+          { from: 1, to: 2 },
+          { from: 1, to: 3 },
+          { from: 2, to: 3 },
+          { from: 2, to: 4 },
+          { from: 3, to: 5 },
+          { from: 4, to: 5 },
+        ],
+      });
+  }
+}
+
+/**
+ * Parses an uploaded graph image into nodes and edges using AI Vision.
+ */
+export async function parseGraphFromImage(base64DataUrl: string): Promise<GeneratedGraph> {
+  const prompt = `/no_think
+You are an expert graph theory computer vision engine.
+Analyze the user's diagram/sketch of a graph.
+Identify all vertices (nodes) and all connections (edges).
+Return ONLY a valid JSON object matching this exact specification:
+{
+  "nodes": [
+    { "id": 1, "label": "A", "x": 100, "y": 100 },
+    { "id": 2, "label": "B", "x": 300, "y": 100 }
+  ],
+  "edges": [
+    { "from": 1, "to": 2, "directed": false, "weight": 1 }
+  ]
+}
+Rules:
+1. Detect ALL vertices and their labels (letters or numbers).
+2. Assign each vertex a unique integer id (1, 2, 3...).
+3. Detect ALL edges connecting vertices. In "edges", set "from" and "to" using the integer "id" of the connected vertices.
+4. Set "directed": true only if arrows are clearly visible, otherwise false.
+Do NOT include any explanation, markdown formatting, or thinking. Output ONLY the raw JSON object.`;
+
+  const messages: ChatMessage[] = [
+    {
+      role: "user",
+      content: [
+        { type: "text", text: prompt },
+        { type: "image_url", image_url: { url: base64DataUrl } },
+      ],
+    },
+  ];
+
+  const rawResponse = await callAIAPI(messages, 900);
+
+  let parsed: any;
+  try {
+    parsed = extractJsonFromText(rawResponse);
+  } catch (err) {
+    console.error("Failed to parse vision response:", rawResponse);
+    throw new Error("Could not parse graph structure from image. Please try a clearer sketch or photo.");
+  }
+
+  return buildGraphFromParsed(parsed);
 }
 
 /**

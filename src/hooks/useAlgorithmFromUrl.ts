@@ -4,18 +4,12 @@ import { algorithmRegistry } from "../algorithms";
 import { VisualizationMode } from "../constants/visualization";
 import {
   generateWeighted,
-  generateRandomGraph,
   type GeneratedGraph,
 } from "../utils/graph/graphGenerator";
 
 const graphForAlgorithm: Record<string, () => GeneratedGraph> = {
   "dijkstra": generateWeighted,
   "bellman-ford": generateWeighted,
-  "prims": () => generateRandomGraph({ nodeCount: 6, edgeDensity: 0.5, directed: false, weighted: true, minWeight: 1, maxWeight: 10, layout: "circular" }),
-  "bfs": () => generateRandomGraph({ nodeCount: 6, edgeDensity: 0.4, directed: false, weighted: false, layout: "circular" }),
-  "dfs": () => generateRandomGraph({ nodeCount: 6, edgeDensity: 0.4, directed: false, weighted: false, layout: "circular" }),
-  "bfs-pathfinding": () => generateRandomGraph({ nodeCount: 6, edgeDensity: 0.4, directed: false, weighted: false, layout: "circular" }),
-  "dfs-pathfinding": () => generateRandomGraph({ nodeCount: 6, edgeDensity: 0.4, directed: false, weighted: false, layout: "circular" }),
 };
 
 /**

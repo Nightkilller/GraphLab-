@@ -112,28 +112,41 @@ export const AlgorithmPicker = ({
         align="center"
         sideOffset={12}
       >
-        <Tabs
-          value={activeTab}
-          onValueChange={(value) => setActiveTab(value as TabCategory)}
-        >
-          <TabsList className="mb-3">
-            <TabsTrigger value="traversal">Traversal</TabsTrigger>
-            <TabsTrigger value="pathfinding">Pathfinding</TabsTrigger>
-          </TabsList>
+        {getAlgorithms("traversal").length > 0 ? (
+          <Tabs
+            value={activeTab}
+            onValueChange={(value) => setActiveTab(value as TabCategory)}
+          >
+            <TabsList className="mb-3">
+              <TabsTrigger value="traversal">Traversal</TabsTrigger>
+              <TabsTrigger value="pathfinding">Pathfinding</TabsTrigger>
+            </TabsList>
 
-          {(['traversal', 'pathfinding'] as TabCategory[]).map((algoType) => (
-            <TabsContent key={algoType} value={algoType} className="grid grid-cols-2 gap-3">
-              {getAlgorithms(algoType).map((algo) => (
-                <AlgorithmCard
-                  key={algo.metadata.id}
-                  algorithm={algo}
-                  selected={selectedAlgo?.key === algo.metadata.id}
-                  onClick={() => handleSelect(algo.metadata.id)}
-                />
-              ))}
-            </TabsContent>
-          ))}
-        </Tabs>
+            {(['traversal', 'pathfinding'] as TabCategory[]).map((algoType) => (
+              <TabsContent key={algoType} value={algoType} className="grid grid-cols-2 gap-3">
+                {getAlgorithms(algoType).map((algo) => (
+                  <AlgorithmCard
+                    key={algo.metadata.id}
+                    algorithm={algo}
+                    selected={selectedAlgo?.key === algo.metadata.id}
+                    onClick={() => handleSelect(algo.metadata.id)}
+                  />
+                ))}
+              </TabsContent>
+            ))}
+          </Tabs>
+        ) : (
+          <div className="grid grid-cols-2 gap-3">
+            {algorithmRegistry.getAll().map((algo) => (
+              <AlgorithmCard
+                key={algo.metadata.id}
+                algorithm={algo}
+                selected={selectedAlgo?.key === algo.metadata.id}
+                onClick={() => handleSelect(algo.metadata.id)}
+              />
+            ))}
+          </div>
+        )}
       </PopoverContent>
     </Popover>
   );
